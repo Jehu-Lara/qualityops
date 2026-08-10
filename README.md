@@ -1,8 +1,8 @@
-# QualityOps AI
+# QualityOps 
 
 Auditable process-performance and capability analysis for manufacturing data.
 
-QualityOps AI is a focused Python portfolio project for loading measurement data, exposing basic data-quality risks, and reproducing selected Minitab metrics with explicit statistical assumptions. The implementation favors traceability and correct terminology over a large feature list.
+QualityOps is a focused Python portfolio project for loading measurement data, exposing basic data-quality risks, and reproducing selected Minitab metrics with explicit statistical assumptions. The implementation favors traceability and correct terminology over a large feature list.
 
 > **Portfolio disclosure:** this repository is inspired by an illustrative DMAIC/PCBA case study prepared for Green Belt Level II evaluation. It does not claim CSSC approval, physical implementation in a factory, validated production savings, or use of confidential company data.
 
@@ -76,7 +76,7 @@ The command returns structured JSON. Blank measurement cells are excluded and co
 ## Repository structure
 
 ```text
-qualityops-ai/
+qualityops/
 ├── .github/               # continuous integration and dependency updates
 ├── data/                  # local-only measurement files
 ├── docs/                  # validation protocol and claim boundaries
