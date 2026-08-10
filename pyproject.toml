@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qualityops-ai"
+version = "0.2.0"
+description = "Auditable process-performance and capability analysis for manufacturing data"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Jehu Lara Corona" },
+]
+keywords = [
+    "manufacturing",
+    "process-capability",
+    "quality-engineering",
+    "six-sigma",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Manufacturing",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+dependencies = [
+    "openpyxl>=3.1,<4",
+    "pandas>=2.2,<3",
+]
+
+[project.scripts]
+qualityops = "qualityops.cli:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,25 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+build/
+dist/
+.venv/
+venv/
+.env
+.DS_Store
+
+# Keep datasets local unless they are explicitly safe to publish.
+data/*.xlsx
+data/*.xls
+data/*.csv
+data/*.parquet
+!data/README.md
+
+# Power BI binaries can be large and may contain embedded data.
+powerbi/*.pbix
+!powerbi/README.md

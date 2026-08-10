@@ -1,0 +1,21 @@
+# Changelog
+
+All notable changes are documented here. The project follows semantic versioning while it remains in alpha development.
+
+## 0.2.0 — 2026-08-09
+
+### Changed
+
+- Corrected statistical terminology: overall sample variation now reports `Pp/Ppk`.
+- Restricted `Cp/Cpk` to analyses with an explicitly supplied within-subgroup sigma.
+- Reorganized the code into an installable `src/qualityops` package with a public CLI.
+- Reframed the DMAIC source as an illustrative case prepared for evaluation, without claiming certification, implementation, or realized savings.
+
+### Added
+
+- Strict measurement-column extraction and source metadata.
+- JSON command output, expanded unit tests, CI, dependency monitoring, and portfolio claim boundaries.
+
+## 0.1.0 — 2026-08-09
+
+- Initial Excel loading, quality summary, sample statistics, and capability formulas.
