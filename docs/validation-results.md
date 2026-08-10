@@ -2,7 +2,8 @@
 
 ## Controlled inputs
 
-- Dataset identifier: `dataset_validacion.xlsx`
+- Dataset identifier: `dataset_validacion.xlsx` (Mock dataset)
+- File SHA-256: `c1056405e908bfe6d46734a0851c8b5cef9b0e2d9a61388a530dda9dadff7abb`
 - Validation date: `2026-08-10`
 - Python version: `3.11`
 - QualityOps version/commit: `826686b`
@@ -13,26 +14,51 @@
 - LSL / USL / units: `495.0 / 505.0 / mL`
 - Subgroup definition: `Not applicable (overall capability test)`
 
-## Overall performance
+## Reproducibility Evidence
 
-| Metric | Python | Minitab | Absolute difference | Pass (`<= 1e-9`) |
-|---|---:|---:|---:|:---:|
-| Mean | 500.6368000000 | 500.6368000000 | 0.0000000000 | PASS |
-| Overall sample standard deviation | 1.5236334660 | 1.5236334660 | 0.0000000000 | PASS |
-| Pp | 1.0938763842 | 1.0938763842 | 4.44e-16 | PASS |
-| Ppk | 0.9545602879 | 0.9545602879 | 0.0000000000 | PASS |
+### Minitab Configuration
+- **Tool:** Stat > Quality Tools > Capability Analysis (Normal)
+- **Data column:** `Medicion_mL`
+- **Subgroup size:** `1`
+- **Lower spec:** `495`
+- **Upper spec:** `505`
+- **Exported precise targets:** Mean = `500.6368000000`, Overall Std Dev = `1.5236334660`, Pp = `1.0938763842`, Ppk = `0.9545602879`.
 
-## Potential capability
+**Visual Evidence:**
+![Minitab Capability Analysis Results](./assets/Process%20Capability%20Report%20for%20Medicion_mL.png)
 
-- Minitab within-sigma estimator: `Not evaluated in this run`
-- Unrounded within sigma supplied to Python: `None (--within-sigma not provided)`
+#### QualityOps Execution
 
-| Metric | Python | Minitab | Absolute difference | Pass (`<= 1e-9`) |
-|---|---:|---:|---:|:---:|
-| Cp | N/A | 1.20 | N/A | N/A |
-| Cpk | N/A | 1.05 | N/A | N/A |
+**Command:**
 
-## Review notes
-- The Python implementation correctly calculates overall sample variation using N-1 degrees of freedom.
-- The JSON output explicitly returned `"potential": null`, proving that the tool strictly respects the statistical contract defined in the README (it does not invent a within-subgroup sigma).
-- Pp and Ppk match Minitab's overall capability calculation exactly. The minor 4.44e-16 variance is a standard floating-point remainder, well within the 1e-9 tolerance.
+```bash
+qualityops analyze --file data\dataset_validation.xlsx --column Medicion_mL --lsl 495 --usl 505
+```
+
+**Output:**
+
+```json
+{
+  "source": {
+    "kind": "excel",
+    "path": "data\\dataset_validation.xlsx",
+    "column": "Medicion_mL",
+    "source_row_count": 50,
+    "missing_measurements_excluded": 0
+  },
+  "analysis": {
+    "overall": {
+      "count": 50,
+      "mean": 500.6368,
+      "overall_sample_std": 1.5236334660198,
+      "pp": 1.0938763842070975,
+      "ppl": 1.233192480499712,
+      "ppu": 0.954560287914483,
+      "ppk": 0.954560287914483,
+      "lsl": 495.0,
+      "usl": 505.0
+    },
+    "potential": null
+  }
+}
+```
