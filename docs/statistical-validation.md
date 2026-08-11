@@ -127,7 +127,6 @@ project dependencies.
 ```powershell
 python -c "import pandas as pd; from qualityops.inferential import one_way_anova; df = pd.read_csv('data/anova_validation.csv'); groups = {name: group['Measurement'].tolist() for name, group in df.groupby('Group', sort=True)}; print(one_way_anova(groups))"
 
-```
 
 ```
 
