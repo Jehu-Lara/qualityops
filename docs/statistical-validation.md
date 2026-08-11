@@ -126,3 +126,32 @@ project dependencies.
 
 ```powershell
 python -c "import pandas as pd; from qualityops.inferential import one_way_anova; df = pd.read_csv('data/anova_validation.csv'); groups = {name: group['Measurement'].tolist() for name, group in df.groupby('Group', sort=True)}; print(one_way_anova(groups))"
+
+```
+
+```
+
+### Pearson correlation
+
+```powershell
+python -c "import pandas as pd; from qualityops.inferential import pearson_correlation; df = pd.read_csv('data/pearson_validation.csv'); print(pearson_correlation(df['Input'], df['Output']))"
+```
+
+### Simple linear regression
+
+```powershell
+python -c "import pandas as pd; from qualityops.inferential import simple_linear_regression; df = pd.read_csv('data/regression_validation.csv'); print(simple_linear_regression(df['Predictor'], df['Response']))"
+```
+
+### Automated test suite
+
+```powershell
+python -m unittest discover -v
+```
+
+## Conclusion
+
+For all three validation datasets, QualityOps and Minitab produce
+equivalent results within the numerical precision displayed by Minitab.
+Observation counts, degrees of freedom, statistical conclusions, and
+reported model quantities are consistent across both implementations.
