@@ -18,6 +18,10 @@ The current release provides:
 - mean and overall sample standard deviation;
 - `Pp`, `PPL`, `PPU`, and `Ppk` from overall sample variation;
 - optional `Cp`, `CPL`, `CPU`, and `Cpk` only when a documented within-subgroup sigma is supplied;
+- one-way ANOVA, Pearson correlation, and simple linear regression with
+  independently recorded Minitab validation;
+- a byte-verified copy and deterministic quality audit of the public UCI SECOM
+  semiconductor-manufacturing dataset;
 - JSON output suitable for later dashboards or APIs;
 - automated tests and a GitHub Actions matrix for Python 3.11–3.13.
 
@@ -51,6 +55,12 @@ Inspect one workbook:
 qualityops inspect data/measurements.xlsx --sheet 0
 ```
 
+Verify and audit the versioned UCI SECOM source files:
+
+```bash
+qualityops audit-secom --data-dir data/external/secom/raw
+```
+
 Analyze an Excel column using overall variation:
 
 ```bash
@@ -78,7 +88,7 @@ The command returns structured JSON. Blank measurement cells are excluded and co
 ```text
 qualityops/
 ├── .github/               # continuous integration and dependency updates
-├── data/                  # local-only measurement files
+├── data/                  # local measurements and controlled public datasets
 ├── docs/                  # validation protocol and claim boundaries
 ├── notebooks/             # exploration only
 ├── powerbi/               # future Process Health page
@@ -98,11 +108,27 @@ The repository separates two validation tracks:
 
 Use [docs/minitab-validation.md](docs/minitab-validation.md) and record results from the included template. Automated unit tests verify the implementation against analytically known examples; they do not replace validation on the intended dataset.
 
+One-way ANOVA, Pearson correlation, and simple linear regression have a
+separate completed comparison in
+[docs/statistical-validation.md](docs/statistical-validation.md). The external
+SECOM dataset has its provenance and quality evidence recorded in
+[docs/secom-dataset.md](docs/secom-dataset.md).
+
 ## Scope and responsible use
 
-- Raw datasets and Power BI binaries are ignored to reduce accidental disclosure.
+- Local raw datasets and Power BI binaries are ignored to reduce accidental
+  disclosure. Public SECOM files are a documented, licensed, hash-verified
+  exception.
 - The package is an educational portfolio artifact in alpha status, not a validated production quality-management system.
 - Capability indices should not be interpreted without process knowledge, control-chart evidence, distribution assessment, and a trustworthy measurement system.
 - AI-generated recommendations, databases, APIs, and production deployment are intentionally outside the current release.
 
 See [docs/portfolio-claims.md](docs/portfolio-claims.md) for statements that are and are not supported by the current evidence.
+
+## License
+
+QualityOps source code is distributed under the repository's
+[MIT License](LICENSE). The original UCI SECOM files under
+`data/external/secom/raw/` retain their Creative Commons Attribution 4.0
+International (CC BY 4.0) license and are not relicensed under MIT. See
+[docs/secom-dataset.md](docs/secom-dataset.md) for attribution and provenance.

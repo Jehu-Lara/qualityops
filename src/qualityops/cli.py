@@ -12,6 +12,7 @@ from typing import Any
 from qualityops.analysis import analyze_process
 from qualityops.data import load_excel, load_measurements
 from qualityops.quality import summarize_dataframe
+from qualityops.secom import audit_secom
 
 
 def _sheet_name(raw_value: str) -> str | int:
@@ -60,6 +61,17 @@ def build_parser() -> argparse.ArgumentParser:
             "Cp/Cpk are not reported."
         ),
     )
+
+    secom_parser = subparsers.add_parser(
+        "audit-secom",
+        help="Verify and audit the public UCI SECOM source files.",
+    )
+    secom_parser.add_argument(
+        "--data-dir",
+        type=Path,
+        required=True,
+        help="Directory containing secom.data, secom_labels.data, and secom.names.",
+    )
     return parser
 
 
@@ -99,17 +111,24 @@ def _analysis_payload(args: argparse.Namespace) -> dict[str, Any]:
     return {"source": source_metadata, "analysis": asdict(result)}
 
 
+def _secom_audit_payload(args: argparse.Namespace) -> dict[str, Any]:
+    return audit_secom(args.data_dir).to_dict()
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     """Execute the CLI and return a process exit code."""
 
     parser = build_parser()
     args = parser.parse_args(argv)
     try:
-        payload = (
-            _inspect_payload(args)
-            if args.command == "inspect"
-            else _analysis_payload(args)
-        )
+        if args.command == "inspect":
+            payload = _inspect_payload(args)
+        elif args.command == "analyze":
+            payload = _analysis_payload(args)
+        elif args.command == "audit-secom":
+            payload = _secom_audit_payload(args)
+        else:  # pragma: no cover - argparse restricts this value.
+            parser.error(f"Unsupported command: {args.command}")
     except (FileNotFoundError, KeyError, TypeError, ValueError) as error:
         parser.error(str(error))
 

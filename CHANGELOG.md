@@ -2,6 +2,12 @@
 
 All notable changes are documented here. The project follows semantic versioning while it remains in alpha development.
 
+## Unreleased
+
+### Added
+
+- Added the public UCI SECOM manufacturing dataset with verified acquisition hashes, deterministic quality auditing, documented provenance, and CLI support.
+
 ## 0.2.0 — 2026-08-09
 
 ### Changed

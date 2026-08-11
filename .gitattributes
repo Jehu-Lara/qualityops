@@ -1,0 +1,3 @@
+data/external/secom/raw/secom.data -text -diff
+data/external/secom/raw/secom_labels.data -text -diff
+data/external/secom/raw/secom.names -text -diff
