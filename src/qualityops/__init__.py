@@ -23,6 +23,7 @@ from qualityops.inferential import (
     pearson_correlation,
     simple_linear_regression,
 )
+from qualityops.secom import SecomAuditResult, audit_secom, load_secom
 
 __all__ = [
     "OverallPerformanceResult",
@@ -43,6 +44,9 @@ __all__ = [
     "one_way_anova",
     "pearson_correlation",
     "simple_linear_regression",
+    "SecomAuditResult",
+    "audit_secom",
+    "load_secom",
 ]
 
 __version__ = "0.2.0"
