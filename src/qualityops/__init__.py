@@ -39,8 +39,8 @@ __all__ = [
     "calculate_sample_std",
     "OneWayAnovaResult",
     "PearsonCorrelationResult",
+    "SimpleLinearRegressionResult",
     "one_way_anova",
-    "pearson_correlation",
     "pearson_correlation",
     "simple_linear_regression",
 ]
