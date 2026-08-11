@@ -7,6 +7,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 
 from scipy.stats import f as f_distribution
+from scipy.stats import t as t_distribution
 
 
 @dataclass(frozen=True, slots=True)
@@ -119,5 +120,90 @@ def one_way_anova(
         ms_between=ms_between,
         ms_within=ms_within,
         f_statistic=f_statistic,
+        p_value=p_value,
+    )
+
+@dataclass(frozen=True, slots=True)
+class PearsonCorrelationResult:
+    """Results from a Pearson product-moment correlation."""
+
+    observation_count: int
+    correlation: float
+    p_value: float
+
+
+def pearson_correlation(
+    x: Iterable[float],
+    y: Iterable[float],
+) -> PearsonCorrelationResult:
+    """Calculate Pearson correlation and its two-sided p-value."""
+
+    x_values = [float(value) for value in x]
+    y_values = [float(value) for value in y]
+
+    if len(x_values) != len(y_values):
+        raise ValueError("Pearson correlation requires equal-length variables")
+
+    observation_count = len(x_values)
+
+    if observation_count < 3:
+        raise ValueError(
+            "Pearson correlation requires at least three paired observations"
+        )
+
+    if not all(
+        math.isfinite(value)
+        for value in (*x_values, *y_values)
+    ):
+        raise ValueError(
+            "Pearson correlation requires only finite observations"
+        )
+
+    x_mean = math.fsum(x_values) / observation_count
+    y_mean = math.fsum(y_values) / observation_count
+
+    x_sum_squares = math.fsum(
+        (value - x_mean) ** 2
+        for value in x_values
+    )
+    y_sum_squares = math.fsum(
+        (value - y_mean) ** 2
+        for value in y_values
+    )
+
+    if x_sum_squares <= 0 or y_sum_squares <= 0:
+        raise ValueError(
+            "Both variables must have positive variation"
+        )
+
+    cross_product = math.fsum(
+        (x_value - x_mean) * (y_value - y_mean)
+        for x_value, y_value in zip(x_values, y_values)
+    )
+
+    correlation = cross_product / math.sqrt(
+        x_sum_squares * y_sum_squares
+    )
+
+    correlation = max(-1.0, min(1.0, correlation))
+    degrees_of_freedom = observation_count - 2
+
+    if abs(correlation) == 1.0:
+        p_value = 0.0
+    else:
+        t_statistic = correlation * math.sqrt(
+            degrees_of_freedom / (1.0 - correlation**2)
+        )
+        p_value = float(
+            2.0
+            * t_distribution.sf(
+                abs(t_statistic),
+                degrees_of_freedom,
+            )
+        )
+
+    return PearsonCorrelationResult(
+        observation_count=observation_count,
+        correlation=correlation,
         p_value=p_value,
     )

@@ -1,7 +1,10 @@
 import math
 import unittest
 
-from qualityops.inferential import one_way_anova
+from qualityops.inferential import (
+    one_way_anova,
+    pearson_correlation,
+)
 
 
 class OneWayAnovaTests(unittest.TestCase):
@@ -55,7 +58,65 @@ class OneWayAnovaTests(unittest.TestCase):
                     "A": [1, 1],
                     "B": [2, 2],
                 }
+)
+class PearsonCorrelationTests(unittest.TestCase):
+    def test_known_pearson_correlation_result(self) -> None:
+        result = pearson_correlation(
+            [10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32],
+            [21, 24, 27, 31, 33, 37, 39, 43, 46, 48, 52, 55],
+        )
+
+        self.assertEqual(result.observation_count, 12)
+        self.assertAlmostEqual(
+            result.correlation,
+            0.9992054933198898,
+            places=12,
+        )
+        self.assertTrue(
+            math.isclose(
+                result.p_value,
+                2.4897925182246257e-15,
+                rel_tol=1e-10,
             )
+        )
+
+    def test_requires_equal_lengths(self) -> None:
+        with self.assertRaisesRegex(ValueError, "equal-length"):
+            pearson_correlation(
+                [1, 2, 3],
+                [1, 2, 3, 4],
+            )
+
+    def test_requires_three_paired_observations(self) -> None:
+        with self.assertRaisesRegex(ValueError, "at least three"):
+            pearson_correlation(
+                [1, 2],
+                [3, 4],
+            )
+
+    def test_rejects_non_finite_observations(self) -> None:
+        with self.assertRaisesRegex(ValueError, "finite"):
+            pearson_correlation(
+                [1, 2, math.nan],
+                [3, 4, 5],
+            )
+
+    def test_rejects_constant_variables(self) -> None:
+        constant_cases = [
+            ([1, 1, 1], [2, 3, 4]),
+            ([1, 2, 3], [4, 4, 4]),
+        ]
+
+        for x_values, y_values in constant_cases:
+            with self.subTest(
+                x_values=x_values,
+                y_values=y_values,
+            ):
+                with self.assertRaisesRegex(ValueError, "variation"):
+                    pearson_correlation(
+                        x_values,
+                        y_values,
+                    )
 
 
 if __name__ == "__main__":

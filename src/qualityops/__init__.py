@@ -17,7 +17,9 @@ from qualityops.analysis import (
 
 from qualityops.inferential import (
     OneWayAnovaResult,
+    PearsonCorrelationResult,
     one_way_anova,
+    pearson_correlation,
 )
 
 __all__ = [
@@ -34,7 +36,9 @@ __all__ = [
     "calculate_ppk",
     "calculate_sample_std",
     "OneWayAnovaResult",
+    "PearsonCorrelationResult",
     "one_way_anova",
+    "pearson_correlation",
 ]
 
 __version__ = "0.2.0"
