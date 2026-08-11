@@ -4,6 +4,7 @@ import unittest
 from qualityops.inferential import (
     one_way_anova,
     pearson_correlation,
+    simple_linear_regression,
 )
 
 
@@ -58,7 +59,9 @@ class OneWayAnovaTests(unittest.TestCase):
                     "A": [1, 1],
                     "B": [2, 2],
                 }
-)
+            )
+
+
 class PearsonCorrelationTests(unittest.TestCase):
     def test_known_pearson_correlation_result(self) -> None:
         result = pearson_correlation(
@@ -118,6 +121,77 @@ class PearsonCorrelationTests(unittest.TestCase):
                         y_values,
                     )
 
+
+class SimpleLinearRegressionTests(unittest.TestCase):
+    def test_known_simple_linear_regression_result(self) -> None:
+        result = simple_linear_regression(
+            [10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32],
+            [21, 24, 27, 31, 33, 37, 39, 43, 46, 48, 52, 55],
+        )
+
+        self.assertEqual(result.observation_count, 12)
+        self.assertAlmostEqual(
+            result.slope,
+            1.5384615384615385,
+            places=12,
+        )
+        self.assertAlmostEqual(
+            result.intercept,
+            5.692307692307693,
+            places=12,
+        )
+        self.assertAlmostEqual(
+            result.r_squared,
+            0.9984116178806445,
+            places=12,
+        )
+        self.assertAlmostEqual(
+            result.slope_standard_error,
+            0.019404806888827415,
+            places=12,
+        )
+        self.assertTrue(
+            math.isclose(
+                result.p_value,
+                2.4897925182241042e-15,
+                rel_tol=1e-10,
+            )
+        )
+
+    def test_requires_equal_lengths(self) -> None:
+        with self.assertRaisesRegex(ValueError, "equal-length"):
+            simple_linear_regression(
+                [1, 2, 3],
+                [1, 2, 3, 4],
+            )
+
+    def test_requires_three_paired_observations(self) -> None:
+        with self.assertRaisesRegex(ValueError, "at least three"):
+            simple_linear_regression(
+                [1, 2],
+                [3, 4],
+            )
+
+    def test_rejects_non_finite_observations(self) -> None:
+        with self.assertRaisesRegex(ValueError, "finite"):
+            simple_linear_regression(
+                [1, 2, math.inf],
+                [3, 4, 5],
+            )
+
+    def test_rejects_constant_predictor(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Predictor"):
+            simple_linear_regression(
+                [1, 1, 1],
+                [2, 3, 4],
+            )
+
+    def test_rejects_constant_response(self) -> None:
+        with self.assertRaisesRegex(ValueError, "Response"):
+            simple_linear_regression(
+                [1, 2, 3],
+                [4, 4, 4],
+            )
 
 if __name__ == "__main__":
     unittest.main()

@@ -18,8 +18,10 @@ from qualityops.analysis import (
 from qualityops.inferential import (
     OneWayAnovaResult,
     PearsonCorrelationResult,
+    SimpleLinearRegressionResult,
     one_way_anova,
     pearson_correlation,
+    simple_linear_regression,
 )
 
 __all__ = [
@@ -39,6 +41,8 @@ __all__ = [
     "PearsonCorrelationResult",
     "one_way_anova",
     "pearson_correlation",
+    "pearson_correlation",
+    "simple_linear_regression",
 ]
 
 __version__ = "0.2.0"
