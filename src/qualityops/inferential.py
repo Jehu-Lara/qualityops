@@ -123,6 +123,7 @@ def one_way_anova(
         p_value=p_value,
     )
 
+
 @dataclass(frozen=True, slots=True)
 class PearsonCorrelationResult:
     """Results from a Pearson product-moment correlation."""
@@ -206,4 +207,118 @@ def pearson_correlation(
         observation_count=observation_count,
         correlation=correlation,
         p_value=p_value,
+    )
+
+
+@dataclass(frozen=True, slots=True)
+class SimpleLinearRegressionResult:
+    """Results from an ordinary least-squares simple linear regression."""
+
+    observation_count: int
+    slope: float
+    intercept: float
+    r_squared: float
+    p_value: float
+    slope_standard_error: float
+
+
+def simple_linear_regression(
+    x: Iterable[float],
+    y: Iterable[float],
+) -> SimpleLinearRegressionResult:
+    """Fit a simple linear regression and test the slope."""
+
+    x_values = [float(value) for value in x]
+    y_values = [float(value) for value in y]
+
+    if len(x_values) != len(y_values):
+        raise ValueError(
+            "Simple linear regression requires equal-length variables"
+        )
+
+    observation_count = len(x_values)
+
+    if observation_count < 3:
+        raise ValueError(
+            "Simple linear regression requires at least three paired observations"
+        )
+
+    if not all(
+        math.isfinite(value)
+        for value in (*x_values, *y_values)
+    ):
+        raise ValueError(
+            "Simple linear regression requires only finite observations"
+        )
+
+    x_mean = math.fsum(x_values) / observation_count
+    y_mean = math.fsum(y_values) / observation_count
+
+    x_sum_squares = math.fsum(
+        (value - x_mean) ** 2
+        for value in x_values
+    )
+    y_sum_squares = math.fsum(
+        (value - y_mean) ** 2
+        for value in y_values
+    )
+
+    if x_sum_squares <= 0:
+        raise ValueError(
+            "Predictor must have positive variation"
+        )
+
+    if y_sum_squares <= 0:
+        raise ValueError(
+            "Response must have positive variation"
+        )
+
+    cross_product = math.fsum(
+        (x_value - x_mean) * (y_value - y_mean)
+        for x_value, y_value in zip(x_values, y_values)
+    )
+
+    slope = cross_product / x_sum_squares
+    intercept = y_mean - slope * x_mean
+
+    residual_sum_squares = math.fsum(
+        (
+            y_value
+            - (intercept + slope * x_value)
+        ) ** 2
+        for x_value, y_value in zip(x_values, y_values)
+    )
+
+    r_squared = 1.0 - (
+        residual_sum_squares / y_sum_squares
+    )
+    r_squared = max(0.0, min(1.0, r_squared))
+
+    degrees_of_freedom = observation_count - 2
+    residual_mean_square = (
+        residual_sum_squares / degrees_of_freedom
+    )
+    slope_standard_error = math.sqrt(
+        residual_mean_square / x_sum_squares
+    )
+
+    if slope_standard_error == 0:
+        p_value = 0.0
+    else:
+        t_statistic = slope / slope_standard_error
+        p_value = float(
+            2.0
+            * t_distribution.sf(
+                abs(t_statistic),
+                degrees_of_freedom,
+            )
+        )
+
+    return SimpleLinearRegressionResult(
+        observation_count=observation_count,
+        slope=slope,
+        intercept=intercept,
+        r_squared=r_squared,
+        p_value=p_value,
+        slope_standard_error=slope_standard_error,
     )
