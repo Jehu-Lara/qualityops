@@ -22,6 +22,8 @@ The current release provides:
   independently recorded Minitab validation;
 - a byte-verified copy and deterministic quality audit of the public UCI SECOM
   semiconductor-manufacturing dataset;
+- a reproducible, transactional, idempotent PostgreSQL 16 loader using a
+  normalized observation/sensor/measurement model and twenty audited queries;
 - JSON output suitable for later dashboards or APIs;
 - automated tests and a GitHub Actions matrix for Python 3.11–3.13.
 
@@ -61,6 +63,20 @@ Verify and audit the versioned UCI SECOM source files:
 qualityops audit-secom --data-dir data/external/secom/raw
 ```
 
+After applying the Alembic migration and defining a Psycopg-compatible
+`QUALITYOPS_DATABASE_URL`, load the audited dataset into PostgreSQL:
+
+```bash
+alembic upgrade head
+qualityops load-secom-postgres --data-dir data/external/secom
+```
+
+The loader verifies the report, source hashes, fingerprint and complete parsed
+oracles before connecting. It returns deterministic JSON with `loaded` or
+`already_loaded`; database credentials are never included. See
+[docs/postgresql-persistence.md](docs/postgresql-persistence.md) for the alpha
+operation contract and the twenty read-only queries.
+
 Analyze an Excel column using overall variation:
 
 ```bash
@@ -92,6 +108,8 @@ qualityops/
 ├── docs/                  # validation protocol and claim boundaries
 ├── notebooks/             # exploration only
 ├── powerbi/               # future Process Health page
+├── migrations/            # Alembic PostgreSQL schema revision
+├── sql/queries/            # twenty audited read-only analyses
 ├── src/qualityops/        # installable Python package and CLI
 ├── tests/                 # deterministic automated tests
 ├── CHANGELOG.md
@@ -121,14 +139,16 @@ SECOM dataset has its provenance and quality evidence recorded in
   exception.
 - The package is an educational portfolio artifact in alpha status, not a validated production quality-management system.
 - Capability indices should not be interpreted without process knowledge, control-chart evidence, distribution assessment, and a trustworthy measurement system.
-- AI-generated recommendations, databases, APIs, and production deployment are intentionally outside the current release.
+- Power BI, APIs, AI-generated recommendations, and production deployment are intentionally outside the current release.
 
 See [docs/portfolio-claims.md](docs/portfolio-claims.md) for statements that are and are not supported by the current evidence.
 
 ## License
 
 QualityOps source code is distributed under the repository's
-[MIT License](LICENSE). The original UCI SECOM files under
+[MIT License](LICENSE), including Python, Alembic migrations, and SQL queries.
+The original UCI SECOM files under
 `data/external/secom/raw/` retain their Creative Commons Attribution 4.0
-International (CC BY 4.0) license and are not relicensed under MIT. See
+International (CC BY 4.0) license. Representations derived from SECOM data also
+remain under CC BY 4.0; neither originals nor derived data are relicensed under MIT. See
 [docs/secom-dataset.md](docs/secom-dataset.md) for attribution and provenance.
