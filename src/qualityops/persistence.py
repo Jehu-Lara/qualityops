@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.resources
 import json
 import math
 import re
@@ -47,7 +48,7 @@ _FILE_ROLES = {
     "secom_labels.data": "labels",
 }
 _SENSOR_KEYS = tuple(f"sensor_{index:03d}" for index in range(590))
-_QUERY_DIRECTORY = Path(__file__).resolve().parents[2] / "sql" / "queries"
+_QUERY_PACKAGE = "qualityops.sql_queries"
 _FIRST_SQL = """SELECT version_num
 FROM public.alembic_version
 ORDER BY version_num;"""
@@ -814,7 +815,12 @@ def _validate_query_parameters(query_name: str, parameters: Mapping[str, object]
 
 
 def _read_query(query_name: str) -> str:
-    sql = (_QUERY_DIRECTORY / query_name).read_text(encoding="utf-8")
+    sql = (
+        importlib.resources.files(_QUERY_PACKAGE)
+        .joinpath(query_name)
+        .read_bytes()
+        .decode("utf-8")
+    )
     if re.search(r"\b(?:INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|COPY|MERGE)\b", sql, re.IGNORECASE):
         raise ValueError("Analytical SQL cannot contain DDL or DML")
     return sql
