@@ -6,6 +6,9 @@ All notable changes are documented here. The project follows semantic versioning
 
 ### Added
 
+- Added a normalized PostgreSQL 16 persistence layer for verified SECOM data,
+  including named relational constraints, Alembic migration and rollback,
+  an idempotent transactional loader, and twenty audited read-only SQL queries.
 - Added the public UCI SECOM manufacturing dataset with verified acquisition hashes, deterministic quality auditing, documented provenance, and CLI support.
 
 ## 0.2.0 — 2026-08-09

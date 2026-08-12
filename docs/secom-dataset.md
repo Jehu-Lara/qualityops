@@ -17,6 +17,9 @@ with an associated in-house line-test outcome.
 
 The QualityOps code remains MIT-licensed. The three original SECOM files retain
 CC BY 4.0 and are not relicensed under the repository's MIT license.
+Representations derived from SECOM data, including persisted measurements and
+quality reports, also retain CC BY 4.0. Python code, Alembic migrations and SQL
+query code remain MIT-licensed.
 
 ## Acquisition and integrity
 
@@ -38,6 +41,12 @@ described as official hashes published by UCI.
 `qualityops audit-secom --data-dir data/external/secom/raw` verifies the three
 extracted files before parsing them. The ZIP hash is retained only as part of
 the acquisition record.
+
+`qualityops load-secom-postgres --data-dir data/external/secom` uses the same
+three verified files and the committed `quality-report.json`. It maps physical
+one-based rows to `observation.source_row`, zero-based measurement columns to
+`sensor.sensor_index`, and every row/column coordinate to the normalized
+`measurement` table. No imputation occurs: source `NaN` becomes SQL `NULL`.
 
 ## Structure and source semantics
 

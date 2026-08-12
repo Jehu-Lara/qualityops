@@ -24,6 +24,10 @@ from qualityops.inferential import (
     simple_linear_regression,
 )
 from qualityops.secom import SecomAuditResult, audit_secom, load_secom
+from qualityops.persistence import (
+    SecomPersistenceResult,
+    persist_secom,
+)
 
 __all__ = [
     "OverallPerformanceResult",
@@ -47,6 +51,8 @@ __all__ = [
     "SecomAuditResult",
     "audit_secom",
     "load_secom",
+    "SecomPersistenceResult",
+    "persist_secom",
 ]
 
 __version__ = "0.2.0"

@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import math
 import re
+import struct
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import Any
@@ -461,10 +462,23 @@ def _constant_sensor_names(
 def _count_duplicate_records(
     dataframe: pd.DataFrame, sensor_names: tuple[str, ...]
 ) -> int:
-    comparison_columns = ["timestamp", "label", *sensor_names]
-    return int(
-        dataframe.duplicated(subset=comparison_columns, keep="first").sum()
-    )
+    seen: set[tuple[Any, ...]] = set()
+    duplicate_count = 0
+
+    for row in dataframe.loc[:, ["timestamp", "label", *sensor_names]].itertuples(
+        index=False, name=None
+    ):
+        timestamp, label, *values = row
+        measurement_key = tuple(
+            ("missing",) if pd.isna(value) else ("value", struct.pack(">d", float(value)))
+            for value in values
+        )
+        key = (timestamp.to_pydatetime(), int(label), *measurement_key)
+        if key in seen:
+            duplicate_count += 1
+        else:
+            seen.add(key)
+    return duplicate_count
 
 
 def load_secom(data_dir: str | Path) -> pd.DataFrame:

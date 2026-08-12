@@ -13,6 +13,8 @@ This record keeps public statements aligned with available evidence.
 - Incorporated the public UCI SECOM manufacturing dataset with documented
   provenance, CC BY 4.0 attribution, verified acquisition hashes, and a
   reproducible deterministic data-quality audit.
+- Carga PostgreSQL reproducible, transaccional e idempotente del dataset
+  público SECOM con veinte consultas SQL auditables.
 - Developed the repository from an illustrative DMAIC/PCBA case study prepared for Green Belt Level II evaluation.
 
 ## Statements not currently supported
@@ -29,6 +31,10 @@ This record keeps public statements aligned with available evidence.
   quality evidence does not establish causality.
 - “SECOM proves production readiness”; a public dataset audit is not a
   production deployment, MES/QMS integration, or operational validation.
+- “The PostgreSQL loader demonstrates production capacity or industrial
+  scalability”; local reproducibility is not production evidence.
+- “The persistence layer includes Power BI, FastAPI, machine learning, or AI”;
+  those capabilities remain outside this milestone.
 
 ## Promotion rule
 
