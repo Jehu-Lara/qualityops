@@ -4,6 +4,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import FrozenInstanceError
 from datetime import datetime, timezone
 from io import StringIO
+import importlib.resources
 import inspect
 import json
 import os
@@ -13,6 +14,7 @@ import sys
 import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
+import zipfile
 
 from qualityops import SecomPersistenceResult
 from qualityops.cli import main
@@ -279,6 +281,127 @@ class QueryContractTests(unittest.TestCase):
                 r"(?i)\b(?:INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|COPY|MERGE)\b",
             )
             persistence._read_query(path.name)
+
+    def test_packaged_queries_are_byte_identical_to_public_contract(self) -> None:
+        public_paths = sorted(QUERY_DIRECTORY.glob("*.sql"))
+        packaged_directory = importlib.resources.files("qualityops.sql_queries")
+        packaged_names = sorted(
+            resource.name
+            for resource in packaged_directory.iterdir()
+            if resource.name.endswith(".sql")
+        )
+        self.assertEqual(packaged_names, [path.name for path in public_paths])
+        self.assertEqual(len(packaged_names), 20)
+        for public_path in public_paths:
+            with self.subTest(query=public_path.name):
+                self.assertEqual(
+                    packaged_directory.joinpath(public_path.name).read_bytes(),
+                    public_path.read_bytes(),
+                )
+
+    def test_built_wheel_loads_exactly_twenty_queries_outside_checkout(self) -> None:
+        expected_names = [path.name for path in sorted(QUERY_DIRECTORY.glob("*.sql"))]
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            temporary_root = Path(temporary_directory)
+            wheel_directory = temporary_root / "wheel"
+            install_directory = temporary_root / "installed"
+            outside_checkout = temporary_root / "outside-checkout"
+            wheel_directory.mkdir()
+            outside_checkout.mkdir()
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "wheel",
+                    "--no-deps",
+                    "--wheel-dir",
+                    str(wheel_directory),
+                    str(REPOSITORY_ROOT),
+                ],
+                cwd=outside_checkout,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            wheels = list(wheel_directory.glob("qualityops_ai-*.whl"))
+            self.assertEqual(len(wheels), 1)
+            wheel = wheels[0]
+
+            with zipfile.ZipFile(wheel) as archive:
+                sql_members = sorted(
+                    name for name in archive.namelist() if name.endswith(".sql")
+                )
+                self.assertEqual(
+                    sql_members,
+                    [f"qualityops/sql_queries/{name}" for name in expected_names],
+                )
+                for public_path, member in zip(
+                    sorted(QUERY_DIRECTORY.glob("*.sql")), sql_members, strict=True
+                ):
+                    with self.subTest(wheel_member=member):
+                        self.assertEqual(archive.read(member), public_path.read_bytes())
+
+            subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "install",
+                    "--no-deps",
+                    "--target",
+                    str(install_directory),
+                    str(wheel),
+                ],
+                cwd=outside_checkout,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            isolated_check = f"""
+from pathlib import Path
+import sys
+
+repository = Path({str(REPOSITORY_ROOT)!r}).resolve()
+source_tree = repository / "src"
+target = Path({str(install_directory)!r}).resolve()
+
+def is_checkout_source_path(entry):
+    try:
+        candidate = Path(entry).resolve()
+    except (OSError, RuntimeError):
+        return False
+    return candidate in {{repository, source_tree}} or source_tree in candidate.parents
+
+sys.path[:] = [str(target)] + [
+    entry for entry in sys.path if entry and not is_checkout_source_path(entry)
+]
+assert repository not in Path.cwd().resolve().parents
+assert not any(is_checkout_source_path(entry) for entry in sys.path)
+
+import qualityops
+from qualityops import persistence
+
+assert Path(qualityops.__file__).resolve().parents[1] == target
+sql = persistence._read_query("01_dataset_provenance.sql")
+sys.stdout.buffer.write(sql.encode("utf-8"))
+"""
+            completed = subprocess.run(
+                [sys.executable, "-c", isolated_check],
+                cwd=outside_checkout,
+                capture_output=True,
+            )
+            self.assertEqual(
+                completed.returncode,
+                0,
+                completed.stderr.decode("utf-8", errors="replace"),
+            )
+            self.assertEqual(
+                completed.stdout,
+                (QUERY_DIRECTORY / "01_dataset_provenance.sql").read_bytes(),
+            )
+            self.assertEqual(completed.stderr, b"")
 
     def test_parameter_validation_rejects_missing_extra_and_out_of_range_values(self) -> None:
         valid = {"dataset_version_id": 1}
