@@ -143,11 +143,13 @@ SECOM dataset has its provenance and quality evidence recorded in
 - Capability indices should not be interpreted without process knowledge, control-chart evidence, distribution assessment, and a trustworthy measurement system.
 - Power BI Gate A and Gate B are complete and documented in
   [docs/powerbi-process-health.md](docs/powerbi-process-health.md), with an
-  [authentic canvas preview](docs/assets/powerbi-process-health.png). Draft PR
-  #19 was created, and all four Required checks passed. Merge remains pending
-  explicit authorization. No release, tag, or Power BI Service publication has
-  occurred. APIs, AI-generated recommendations, and production deployment remain
-  outside the current release.
+  [authentic canvas preview](docs/assets/powerbi-process-health.png). PR #19 was
+  merged via Rebase and merge, producing `main` SHA
+  `e85c0c57907a44ea6c7d63b5ed333da4a432ef51`. All four checks on `main`
+  completed with `SUCCESS`. No release or tag was created, and `CHANGELOG.md`
+  remains under `Unreleased`. There was no publication to Power BI Service or
+  Fabric and no gateway was configured. APIs, AI-generated recommendations, and
+  production deployment remain outside the current release.
 
 See [docs/portfolio-claims.md](docs/portfolio-claims.md) for statements that are and are not supported by the current evidence.
 

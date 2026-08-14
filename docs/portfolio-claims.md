@@ -13,11 +13,11 @@ This record keeps public statements aligned with available evidence.
 - Incorporated the public UCI SECOM manufacturing dataset with documented
   provenance, CC BY 4.0 attribution, verified acquisition hashes, and a
   reproducible deterministic data-quality audit.
-- Carga PostgreSQL reproducible, transaccional e idempotente del dataset
-  público SECOM con veinte consultas SQL auditables.
-- Vista Power BI reproducible de una página sobre PostgreSQL para comunicar
-  calidad de datos, outcomes observados y asociaciones descriptivas del dataset
-  público SECOM, con reconciliación y evidencia auditable.
+- Implemented a reproducible, transactional, and idempotent PostgreSQL load of
+  the public SECOM dataset with twenty auditable SQL queries.
+- Built a reproducible one-page Power BI view backed by PostgreSQL to communicate
+  data quality, observed outcomes, and descriptive associations in the public
+  SECOM dataset, with reconciliation and auditable evidence.
 - Developed the repository from an illustrative DMAIC/PCBA case study prepared for Green Belt Level II evaluation.
 
 ## Statements not currently supported
@@ -43,11 +43,13 @@ This record keeps public statements aligned with available evidence.
 
 ## Governance through Gate B
 
-Gate A and Gate B are complete for the bounded Power BI statement above. Draft
-PR #19 was created and all four Required checks passed. Merge remains pending
-explicit authorization. No release, tag, or Power BI Service publication has
-occurred. This status does not authorize claims about production, causality,
-capability, prediction, AI, or industrial scale.
+Gate A and Gate B are complete for the bounded Power BI statement above. PR #19
+was merged via Rebase and merge, producing main SHA
+e85c0c57907a44ea6c7d63b5ed333da4a432ef51. All four checks on main completed
+with SUCCESS. No release or tag was created; CHANGELOG.md remains under
+Unreleased. There was no publication to Power BI Service or Fabric and no
+gateway was configured. This status does not authorize claims about production,
+causality, capability, prediction, AI, or industrial scale.
 
 ## Promotion rule
 

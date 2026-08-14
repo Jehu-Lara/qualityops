@@ -670,11 +670,14 @@ class PowerBIContractTests(unittest.TestCase):
         for required in ("PBIP", "PBIR", "TMDL", "Import", READER_ROLE, "DAX"):
             self.assertIn(required, powerbi_readme + architecture)
         self.assertIn(
-            "complete — gate a and gate b complete; draft pr #19 created; four required checks passed; merge pending explicit authorization",
+            "complete — pr #19 merged via rebase and merge at main e85c0c57907a44ea6c7d63b5ed333da4a432ef51; four main checks completed with success",
             roadmap.lower(),
         )
         self.assertIn("gate a and gate b are complete", claims.lower())
-        self.assertIn("vista power bi reproducible de una página", claims.lower())
+        self.assertIn(
+            "built a reproducible one-page power bi view backed by postgresql",
+            claims.lower(),
+        )
         self.assertIn("do not establish causality", architecture)
         self.assertIn("PBIR_SCHEMA_UNREACHABLE", architecture)
         self.assertIn("visualContainer/2.11.0", architecture)
