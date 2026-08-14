@@ -2,7 +2,7 @@
 
 ## Status and decision objective
 
-Status: **Gate A and Gate B complete — merge pending explicit authorization.**
+Status: **Complete — PR #19 merged via Rebase and merge at main e85c0c57907a44ea6c7d63b5ed333da4a432ef51; four main checks completed with SUCCESS.**
 
 The intended deliverable is one Power BI page named `Process Health` that
 communicates verified dataset health, observed pass/fail outcomes, daily fail
@@ -13,9 +13,11 @@ root cause, operational importance, or process capability.
 The PBIP opened, imported the canonical SECOM data, reconciled six DAX result
 sets against audited SQL and independent Python oracles, and reopened after the
 final external edits. The completed page and its authentic canvas capture are
-durable Gate A evidence. Gate B is complete: Draft PR #19 was created and all
-four Required checks passed. Merge remains pending explicit authorization. No
-release, tag, or Power BI Service publication has occurred.
+durable Gate A evidence. Gate B is complete. PR #19 was merged via Rebase and
+merge, producing main SHA e85c0c57907a44ea6c7d63b5ed333da4a432ef51. All four
+checks on main completed with SUCCESS. No release or tag was created;
+CHANGELOG.md remains under Unreleased. There was no publication to Power BI
+Service or Fabric and no gateway was configured.
 
 ## Architecture
 

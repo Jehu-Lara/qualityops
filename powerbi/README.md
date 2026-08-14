@@ -1,6 +1,6 @@
 # Power BI Process Health
 
-Status: **Gate A and Gate B complete — Draft PR #19 created; four Required checks passed; merge pending explicit authorization; no release, tag, or Power BI Service publication performed.**
+Status: **Complete — PR #19 merged via Rebase and merge; main e85c0c57907a44ea6c7d63b5ed333da4a432ef51; four main checks completed with SUCCESS; no release, tag, Power BI Service/Fabric publication, or gateway configuration. CHANGELOG.md remains under Unreleased.**
 
 `QualityOpsProcessHealth.pbip` is a Power BI Desktop project over the canonical
 SECOM version persisted in PostgreSQL 16. The report uses PBIR, the semantic
