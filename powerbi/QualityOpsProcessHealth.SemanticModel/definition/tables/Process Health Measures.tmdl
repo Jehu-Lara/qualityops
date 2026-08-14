@@ -1,0 +1,388 @@
+table 'Process Health Measures'
+	lineageTag: 0f4cd66c-32a8-456c-833e-896d027a59b0
+
+	/// Number of observations in the current filter context.
+	measure 'Observation Count' = COUNTROWS(Observation)
+		formatString: #,0
+		displayFolder: Health
+		lineageTag: de28ba27-369e-4430-959c-8577cd0ee1cd
+
+	/// Number of pass observations after replacing any outcome filter.
+	measure 'Pass Count' =
+			CALCULATE(
+				[Observation Count],
+				REMOVEFILTERS(Observation[outcome], Observation[outcome_name]),
+				Observation[outcome] = -1
+			)
+		formatString: #,0
+		displayFolder: Health
+		lineageTag: e2c673a9-58d2-40eb-9918-b5c1805d1553
+
+	/// Number of fail observations after replacing any outcome filter.
+	measure 'Fail Count' =
+			CALCULATE(
+				[Observation Count],
+				REMOVEFILTERS(Observation[outcome], Observation[outcome_name]),
+				Observation[outcome] = 1
+			)
+		formatString: #,0
+		displayFolder: Health
+		lineageTag: 84d18684-2563-4b03-a976-8c81a77f6093
+
+	/// Fail observations divided by observations in the current context.
+	measure 'Fail Rate' = DIVIDE([Fail Count], [Observation Count])
+		formatString: 0.00%
+		displayFolder: Health
+		lineageTag: dc4ea448-6f09-4880-8be0-8da9386dc848
+
+	/// Number of measurement coordinates in the current filter context.
+	measure 'Measurement Count' = COUNTROWS(Measurement)
+		formatString: #,0
+		displayFolder: Health
+		lineageTag: 5710da3f-edb3-4428-8aff-758831e39b7d
+
+	/// Number of measurement coordinates whose value is blank.
+	measure 'Missing Measurement Count' =
+			CALCULATE(
+				[Measurement Count],
+				Measurement[is_missing] = TRUE()
+			)
+		formatString: #,0
+		displayFolder: Health
+		lineageTag: a0cc6042-6c91-4a4c-b433-8d816c997b23
+
+	/// Number of measurement coordinates whose value is nonblank.
+	measure 'Nonmissing Count' =
+			CALCULATE(
+				[Measurement Count],
+				Measurement[is_missing] = FALSE()
+			)
+		formatString: #,0
+		displayFolder: Health
+		lineageTag: 1ccdd772-f5c9-46bf-88b6-bd925fed4060
+
+	/// Missing measurement coordinates divided by all measurement coordinates.
+	measure 'Missing Rate' = DIVIDE([Missing Measurement Count], [Measurement Count])
+		formatString: 0.00%
+		displayFolder: Health
+		lineageTag: da1b5f1e-055d-49cc-824f-d923b15f107d
+
+	/// Outcome observations divided by observations after removing outcome filters.
+	measure 'Outcome Share' =
+			DIVIDE(
+				[Observation Count],
+				CALCULATE(
+					[Observation Count],
+					REMOVEFILTERS(Observation[outcome], Observation[outcome_name])
+				)
+			)
+		formatString: 0.00%
+		displayFolder: Health
+		lineageTag: 0e69ed92-de93-4222-b46d-cc34a3d61d1d
+
+	/// Number of canonical DatasetVersion rows, invariant to report filters.
+	measure 'Dataset Version Row Count' = CALCULATE(COUNTROWS(DatasetVersion), REMOVEFILTERS())
+		formatString: #,0
+		isHidden
+		displayFolder: Reconciliation
+		lineageTag: 0c38ae32-54c3-454a-a2ad-bd04bd2949f9
+
+	/// Contractual observation count stored in DatasetVersion.
+	measure 'Expected Observation Count' = CALCULATE(MAX(DatasetVersion[observation_count]), REMOVEFILTERS())
+		formatString: #,0
+		isHidden
+		displayFolder: Reconciliation
+		lineageTag: efdcfa93-8526-4cb7-b4e9-df4b579ddfa4
+
+	/// Contractual sensor count stored in DatasetVersion.
+	measure 'Expected Sensor Count' = CALCULATE(MAX(DatasetVersion[sensor_count]), REMOVEFILTERS())
+		formatString: #,0
+		isHidden
+		displayFolder: Reconciliation
+		lineageTag: 0e8acdba-f273-434a-bdfd-a991755bfa42
+
+	/// Contractual measurement count stored in DatasetVersion.
+	measure 'Expected Measurement Count' = CALCULATE(MAX(DatasetVersion[measurement_count]), REMOVEFILTERS())
+		formatString: #,0
+		isHidden
+		displayFolder: Reconciliation
+		lineageTag: 546e0ffe-d768-451e-bdba-0700c49160c0
+
+	/// Contractual missing measurement count stored in DatasetVersion.
+	measure 'Expected Missing Measurement Count' = CALCULATE(MAX(DatasetVersion[missing_measurement_count]), REMOVEFILTERS())
+		formatString: #,0
+		isHidden
+		displayFolder: Reconciliation
+		lineageTag: 88f163e2-7032-4dee-a1c3-ac578ffb4f7a
+
+	/// Imported observation count, invariant to report filters.
+	measure 'Actual Observation Count' = CALCULATE(COUNTROWS(Observation), REMOVEFILTERS())
+		formatString: #,0
+		isHidden
+		displayFolder: Reconciliation
+		lineageTag: c7445c47-8a1f-4008-86a0-c185d56815bf
+
+	/// Imported sensor count, invariant to report filters.
+	measure 'Actual Sensor Count' = CALCULATE(COUNTROWS(Sensor), REMOVEFILTERS())
+		formatString: #,0
+		isHidden
+		displayFolder: Reconciliation
+		lineageTag: 93ef9b6b-95e8-467a-8e0b-e1495c142d4c
+
+	/// Imported measurement count, invariant to report filters.
+	measure 'Actual Measurement Count' = CALCULATE(COUNTROWS(Measurement), REMOVEFILTERS())
+		formatString: #,0
+		isHidden
+		displayFolder: Reconciliation
+		lineageTag: d67ad257-6f4c-449b-9ba5-460a483f7c31
+
+	/// Imported blank measurement count, invariant to report filters.
+	measure 'Actual Missing Measurement Count' =
+			CALCULATE(
+				COUNTROWS(Measurement),
+				REMOVEFILTERS(),
+				Measurement[is_missing] = TRUE()
+			)
+		formatString: #,0
+		isHidden
+		displayFolder: Reconciliation
+		lineageTag: 72b7251c-5782-455a-8709-2c030d8db09e
+
+	/// Observations whose number of measurement coordinates differs from sensor count.
+	measure 'Observations With Invalid Measurement Count' =
+			VAR ExpectedSensors = [Expected Sensor Count]
+			RETURN
+			SUMX(
+				ALL(Observation),
+				VAR CurrentSourceRow = Observation[source_row]
+				VAR ActualForRow =
+					CALCULATE(
+						COUNTROWS(Measurement),
+						REMOVEFILTERS(),
+						TREATAS({CurrentSourceRow}, Observation[source_row])
+					)
+				RETURN
+					IF(ActualForRow = ExpectedSensors, 0, 1)
+			)
+		formatString: #,0
+		isHidden
+		displayFolder: Reconciliation
+		lineageTag: f1feb966-4b88-448d-9dbf-f7cacccfb6c8
+
+	/// MATCH only when all imported counts equal their contractual values.
+	measure 'Reconciliation Status' =
+			IF(
+				[Dataset Version Row Count] = 1
+					&& [Actual Observation Count] = [Expected Observation Count]
+					&& [Actual Sensor Count] = [Expected Sensor Count]
+					&& [Actual Measurement Count] = [Expected Measurement Count]
+					&& [Actual Missing Measurement Count] = [Expected Missing Measurement Count]
+					&& [Observations With Invalid Measurement Count] = 0,
+				"MATCH",
+				"CONFLICT"
+			)
+		displayFolder: Reconciliation
+		lineageTag: 94883147-4d38-4fc6-8073-3ffb26582dac
+
+	/// Nonblank pass measurements for the current sensor context.
+	measure 'Pass Nonmissing Count' =
+			CALCULATE(
+				COUNT(Measurement[value]),
+				REMOVEFILTERS(Observation[outcome], Observation[outcome_name]),
+				Observation[outcome] = -1
+			)
+		formatString: #,0
+		displayFolder: Sensor diagnostics
+		lineageTag: 3b75d77f-e2ae-4696-9d97-4e4204a4746e
+
+	/// Nonblank fail measurements for the current sensor context.
+	measure 'Fail Nonmissing Count' =
+			CALCULATE(
+				COUNT(Measurement[value]),
+				REMOVEFILTERS(Observation[outcome], Observation[outcome_name]),
+				Observation[outcome] = 1
+			)
+		formatString: #,0
+		displayFolder: Sensor diagnostics
+		lineageTag: cef5189e-e900-4c48-92fa-422849319aec
+
+	/// Arithmetic mean of nonblank pass measurements in sensor units.
+	measure 'Pass Mean' =
+			CALCULATE(
+				AVERAGE(Measurement[value]),
+				REMOVEFILTERS(Observation[outcome], Observation[outcome_name]),
+				Observation[outcome] = -1
+			)
+		formatString: 0.000000
+		displayFolder: Sensor diagnostics
+		lineageTag: a44bda6a-bcc7-43e8-a1a4-68b6ae73becf
+
+	/// Arithmetic mean of nonblank fail measurements in sensor units.
+	measure 'Fail Mean' =
+			CALCULATE(
+				AVERAGE(Measurement[value]),
+				REMOVEFILTERS(Observation[outcome], Observation[outcome_name]),
+				Observation[outcome] = 1
+			)
+		formatString: 0.000000
+		displayFolder: Sensor diagnostics
+		lineageTag: f5dfe29f-84e5-4bce-b7d3-7076bb6a8e6a
+
+	/// Sample variance of nonblank pass measurements in squared sensor units.
+	measure 'Pass Sample Variance' =
+			CALCULATE(
+				VAR.S(Measurement[value]),
+				REMOVEFILTERS(Observation[outcome], Observation[outcome_name]),
+				Observation[outcome] = -1
+			)
+		formatString: 0.000000
+		displayFolder: Sensor diagnostics
+		lineageTag: ef2690bf-7dcc-4b6c-8b08-9e37fd901801
+
+	/// Sample variance of nonblank fail measurements in squared sensor units.
+	measure 'Fail Sample Variance' =
+			CALCULATE(
+				VAR.S(Measurement[value]),
+				REMOVEFILTERS(Observation[outcome], Observation[outcome_name]),
+				Observation[outcome] = 1
+			)
+		formatString: 0.000000
+		displayFolder: Sensor diagnostics
+		lineageTag: bc01b732-ae31-4e69-84c4-de9cd4007567
+
+	/// Degrees-of-freedom-weighted pooled pass/fail sample variance.
+	measure 'Pooled Variance' =
+			VAR NPass = [Pass Nonmissing Count]
+			VAR NFail = [Fail Nonmissing Count]
+			VAR PassVariance = [Pass Sample Variance]
+			VAR FailVariance = [Fail Sample Variance]
+			VAR DegreesOfFreedom = NPass + NFail - 2
+			RETURN
+			IF(
+				NPass < 2
+					|| NFail < 2
+					|| ISBLANK(PassVariance)
+					|| ISBLANK(FailVariance)
+					|| DegreesOfFreedom <= 0,
+				BLANK(),
+				DIVIDE(
+					(NFail - 1) * FailVariance + (NPass - 1) * PassVariance,
+					DegreesOfFreedom
+				)
+			)
+		formatString: 0.000000
+		displayFolder: Sensor diagnostics
+		lineageTag: 21cd1210-8670-49b2-9a53-6c1053f066ef
+
+	/// Fail mean minus pass mean divided by pooled sample standard deviation.
+	measure 'Standardized Mean Difference' =
+			VAR Pooled = [Pooled Variance]
+			VAR PassAverage = [Pass Mean]
+			VAR FailAverage = [Fail Mean]
+			RETURN
+			IF(
+				ISBLANK(Pooled)
+					|| Pooled <= 0
+					|| ISBLANK(PassAverage)
+					|| ISBLANK(FailAverage),
+				BLANK(),
+				DIVIDE(FailAverage - PassAverage, SQRT(Pooled))
+			)
+		formatString: 0.000
+		displayFolder: Sensor diagnostics
+		lineageTag: 6b1322d5-b807-4598-beda-d75aa848620f
+
+	/// Absolute magnitude of the signed standardized mean difference.
+	measure 'Absolute Standardized Mean Difference' =
+			VAR Difference = [Standardized Mean Difference]
+			RETURN
+			IF(
+				ISBLANK(Difference),
+				BLANK(),
+				ABS(Difference)
+			)
+		formatString: 0.000
+		displayFolder: Sensor diagnostics
+		lineageTag: a38984f9-b8bd-4356-a93f-c79e6fdb027a
+
+	/// Missing-rate rank with ascending sensor-index tie breaking.
+	measure 'Missingness Rank' =
+			VAR CurrentSensorIndex = SELECTEDVALUE(Sensor[sensor_index])
+			VAR CurrentValue =
+				CALCULATE([Missing Rate], REMOVEFILTERS(Observation))
+			RETURN
+			IF(
+				ISBLANK(CurrentSensorIndex) || ISBLANK(CurrentValue),
+				BLANK(),
+				1
+					+ COUNTROWS(
+						FILTER(
+							ALL(Sensor),
+							VAR CandidateIndex = Sensor[sensor_index]
+							VAR CandidateValue =
+								CALCULATE([Missing Rate], REMOVEFILTERS(Observation))
+							RETURN
+								NOT ISBLANK(CandidateValue)
+									&& (
+										CandidateValue > CurrentValue
+											|| (
+												CandidateValue = CurrentValue
+													&& CandidateIndex < CurrentSensorIndex
+											)
+									)
+						)
+					)
+			)
+		formatString: 0
+		isHidden
+		displayFolder: Sensor diagnostics
+		lineageTag: b4cb9cbf-22c9-44f8-92c2-85b8bb9c39a4
+
+	/// Absolute-SMD rank with blanks excluded and sensor-index tie breaking.
+	measure 'Standardized Difference Rank' =
+			VAR CurrentSensorIndex = SELECTEDVALUE(Sensor[sensor_index])
+			VAR CurrentValue =
+				CALCULATE(
+					[Absolute Standardized Mean Difference],
+					REMOVEFILTERS(Observation)
+				)
+			RETURN
+			IF(
+				ISBLANK(CurrentSensorIndex) || ISBLANK(CurrentValue),
+				BLANK(),
+				1
+					+ COUNTROWS(
+						FILTER(
+							ALL(Sensor),
+							VAR CandidateIndex = Sensor[sensor_index]
+							VAR CandidateValue =
+								CALCULATE(
+									[Absolute Standardized Mean Difference],
+									REMOVEFILTERS(Observation)
+								)
+							RETURN
+								NOT ISBLANK(CandidateValue)
+									&& (
+										CandidateValue > CurrentValue
+											|| (
+												CandidateValue = CurrentValue
+													&& CandidateIndex < CurrentSensorIndex
+											)
+									)
+						)
+					)
+			)
+		formatString: 0
+		isHidden
+		displayFolder: Sensor diagnostics
+		lineageTag: 50747a72-9317-41c5-9e5a-20fe7da0335e
+
+	column measure_anchor
+		isHidden
+		lineageTag: 814510eb-4126-404f-9769-b6297e794647
+		isNameInferred
+		sourceColumn: [measure_anchor]
+
+	partition 'Process Health Measures' = calculated
+		mode: import
+		source = DATATABLE("measure_anchor", INTEGER, {{1}})

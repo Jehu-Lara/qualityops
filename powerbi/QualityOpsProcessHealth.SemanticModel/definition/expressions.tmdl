@@ -1,0 +1,98 @@
+expression PostgreSQLServer = "127.0.0.1:5432" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 4ad4eadc-07ce-4122-b95c-a9c17948edfd
+
+	annotation PBI_ResultType = Text
+
+expression PostgreSQLDatabase = "qualityops_test_secom" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: ee9fe92d-76eb-468b-a17d-1c2bec9f5528
+
+	annotation PBI_ResultType = Text
+
+expression DatasetCode = "uci-secom" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: fbae1743-552d-4f60-939d-ae84d29ae467
+
+	annotation PBI_ResultType = Text
+
+expression VersionLabel = "uci-secom-acquisition-2026-08-10" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 21966bd1-7cdf-4bfc-be49-730c8bfcb260
+
+	annotation PBI_ResultType = Text
+
+expression ContentFingerprint = "57856B2CA3ED8E782F88E6A9DEDC61623A4B370ED8442BB89B03BC3B44610BF7" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 495af068-b66a-4493-85c6-e7a472d81f82
+
+	annotation PBI_ResultType = Text
+
+expression SourceDatabase =
+		let
+			Source = PostgreSQL.Database(
+				PostgreSQLServer,
+				PostgreSQLDatabase,
+				[CreateNavigationProperties = false]
+			)
+		in
+			Source
+	lineageTag: 4d3451be-95a2-4378-89fa-c07ef57a40e5
+
+expression CanonicalVersionRows =
+		let
+			Datasets = SourceDatabase{[Schema = "qualityops", Item = "dataset"]}[Data],
+			FilteredDatasets = Table.SelectRows(
+				Datasets,
+				each [dataset_code] = DatasetCode
+			),
+			Versions = SourceDatabase{[Schema = "qualityops", Item = "dataset_version"]}[Data],
+			FilteredVersions = Table.SelectRows(
+				Versions,
+				each [version_label] = VersionLabel
+					and [content_fingerprint] = ContentFingerprint
+			),
+			Joined = Table.NestedJoin(
+				FilteredVersions,
+				{"dataset_id"},
+				FilteredDatasets,
+				{"dataset_id"},
+				"Dataset",
+				JoinKind.Inner
+			),
+			Expanded = Table.ExpandTableColumn(
+				Joined,
+				"Dataset",
+				{"dataset_code", "name", "publisher", "doi", "source_url", "license_spdx"},
+				{"dataset_code", "name", "publisher", "doi", "source_url", "license_spdx"}
+			),
+			Selected = Table.SelectColumns(
+				Expanded,
+				{
+					"dataset_version_id", "dataset_code", "name", "publisher", "doi",
+					"source_url", "license_spdx", "version_label", "content_fingerprint",
+					"acquired_on", "loaded_at", "audit_schema_version", "observation_count",
+					"sensor_count", "measurement_count", "missing_measurement_count"
+				}
+			)
+		in
+			Selected
+	lineageTag: 131285e8-27b5-4c6e-adb1-4d90266a04b4
+
+expression CanonicalVersionGuard =
+		let
+			Rows = Table.Buffer(CanonicalVersionRows),
+			RowCount = Table.RowCount(Rows),
+			Guarded =
+				if RowCount <> 1 then
+					error Error.Record(
+						"CanonicalVersionError",
+						"Canonical SECOM identity must resolve to exactly one row.",
+						[RowCount = RowCount]
+					)
+				else if Rows{0}[dataset_version_id] = null or Rows{0}[dataset_version_id] <= 0 then
+					error Error.Record(
+						"CanonicalVersionError",
+						"Canonical SECOM identifiers must be non-null and positive.",
+						null
+					)
+				else
+					Rows{0}
+		in
+			Guarded
+	lineageTag: 4f223177-a0fb-41be-8863-62c3899b95a7

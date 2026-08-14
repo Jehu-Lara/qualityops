@@ -1,0 +1,2 @@
+dataset_version_id	dataset_code	name	publisher	doi	source_url	license_spdx	version_label	acquired_on	loaded_at	audit_schema_version	content_fingerprint
+NON_NULL_BIGINT	uci-secom	SECOM	UCI Machine Learning Repository	10.24432/C54305	https://archive.ics.uci.edu/dataset/179/secom	CC-BY-4.0	uci-secom-acquisition-2026-08-10	2026-08-10	NON_NULL_TIMESTAMPTZ	1	57856B2CA3ED8E782F88E6A9DEDC61623A4B370ED8442BB89B03BC3B44610BF7

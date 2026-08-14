@@ -15,6 +15,9 @@ This record keeps public statements aligned with available evidence.
   reproducible deterministic data-quality audit.
 - Carga PostgreSQL reproducible, transaccional e idempotente del dataset
   público SECOM con veinte consultas SQL auditables.
+- Vista Power BI reproducible de una página sobre PostgreSQL para comunicar
+  calidad de datos, outcomes observados y asociaciones descriptivas del dataset
+  público SECOM, con reconciliación y evidencia auditable.
 - Developed the repository from an illustrative DMAIC/PCBA case study prepared for Green Belt Level II evaluation.
 
 ## Statements not currently supported
@@ -33,8 +36,18 @@ This record keeps public statements aligned with available evidence.
   production deployment, MES/QMS integration, or operational validation.
 - “The PostgreSQL loader demonstrates production capacity or industrial
   scalability”; local reproducibility is not production evidence.
-- “The persistence layer includes Power BI, FastAPI, machine learning, or AI”;
-  those capabilities remain outside this milestone.
+- “Power BI is part of the persistence layer”; the PBIP project is an
+  independent read-only consumer of PostgreSQL.
+- “The milestone includes FastAPI, machine learning, or AI”; those capabilities
+  remain outside this milestone.
+
+## Governance through Gate B
+
+Gate A and Gate B are complete for the bounded Power BI statement above. Draft
+PR #19 was created and all four Required checks passed. Merge remains pending
+explicit authorization. No release, tag, or Power BI Service publication has
+occurred. This status does not authorize claims about production, causality,
+capability, prediction, AI, or industrial scale.
 
 ## Promotion rule
 

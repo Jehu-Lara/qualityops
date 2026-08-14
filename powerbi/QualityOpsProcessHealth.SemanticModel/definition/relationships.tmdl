@@ -1,0 +1,7 @@
+relationship 379e391f-102f-424a-81c1-6c820e3a4101
+	fromColumn: Measurement.source_row
+	toColumn: Observation.source_row
+
+relationship 7962854d-bf56-4d24-b352-a88540624ace
+	fromColumn: Measurement.sensor_index
+	toColumn: Sensor.sensor_index

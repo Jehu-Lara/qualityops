@@ -1,0 +1,16 @@
+EVALUATE
+SELECTCOLUMNS(
+    SUMMARIZECOLUMNS(
+        Observation[outcome],
+        Observation[outcome_name],
+        "dataset_version_id_value", MAX(DatasetVersion[dataset_version_id]),
+        "observation_count_value", [Observation Count],
+        "observation_percentage_value", [Outcome Share] * 100.0
+    ),
+    "dataset_version_id", [dataset_version_id_value],
+    "outcome", Observation[outcome],
+    "outcome_name", Observation[outcome_name],
+    "observation_count", [observation_count_value],
+    "observation_percentage", [observation_percentage_value]
+)
+ORDER BY [outcome] ASC
