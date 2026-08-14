@@ -24,6 +24,8 @@ The current release provides:
   semiconductor-manufacturing dataset;
 - a reproducible, transactional, idempotent PostgreSQL 16 loader using a
   normalized observation/sensor/measurement model and twenty audited queries;
+- a versionable one-page Power BI PBIP/PBIR/TMDL Process Health decision view
+  over verified PostgreSQL data, with six reconciled DAX evidence exports;
 - JSON output suitable for later dashboards or APIs;
 - automated tests and a GitHub Actions matrix for Python 3.11–3.13.
 
@@ -107,7 +109,7 @@ qualityops/
 ├── data/                  # local measurements and controlled public datasets
 ├── docs/                  # validation protocol and claim boundaries
 ├── notebooks/             # exploration only
-├── powerbi/               # future Process Health page
+├── powerbi/               # Process Health PBIP project and validation evidence
 ├── migrations/            # Alembic PostgreSQL schema revision
 ├── sql/queries/            # twenty audited read-only analyses
 ├── src/qualityops/        # installable Python package and CLI
@@ -139,7 +141,13 @@ SECOM dataset has its provenance and quality evidence recorded in
   exception.
 - The package is an educational portfolio artifact in alpha status, not a validated production quality-management system.
 - Capability indices should not be interpreted without process knowledge, control-chart evidence, distribution assessment, and a trustworthy measurement system.
-- Power BI, APIs, AI-generated recommendations, and production deployment are intentionally outside the current release.
+- Power BI Gate A and Gate B are complete and documented in
+  [docs/powerbi-process-health.md](docs/powerbi-process-health.md), with an
+  [authentic canvas preview](docs/assets/powerbi-process-health.png). Draft PR
+  #19 was created, and all four Required checks passed. Merge remains pending
+  explicit authorization. No release, tag, or Power BI Service publication has
+  occurred. APIs, AI-generated recommendations, and production deployment remain
+  outside the current release.
 
 See [docs/portfolio-claims.md](docs/portfolio-claims.md) for statements that are and are not supported by the current evidence.
 
@@ -152,3 +160,6 @@ The original UCI SECOM files under
 International (CC BY 4.0) license. Representations derived from SECOM data also
 remain under CC BY 4.0; neither originals nor derived data are relicensed under MIT. See
 [docs/secom-dataset.md](docs/secom-dataset.md) for attribution and provenance.
+This includes normalized validation TSVs, derived aggregates, and the
+Power BI screenshot. Power Query M, DAX, TMDL, PBIR, administrative SQL,
+validation code, theme metadata, and project-authored documentation remain MIT.

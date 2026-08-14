@@ -1,0 +1,41 @@
+table Sensor
+	lineageTag: d5e66e3a-bac7-4795-b9cb-e637c8f51a2e
+
+	column sensor_index
+		dataType: int64
+		isHidden
+		isKey
+		lineageTag: 3d5a0425-3d3a-4cbc-a488-c59cb3ec2e1f
+		summarizeBy: none
+		sourceColumn: sensor_index
+
+	column sensor_key
+		dataType: string
+		lineageTag: a4226da2-b99e-4331-8941-c786164aaa15
+		summarizeBy: none
+		sourceColumn: sensor_key
+		sortByColumn: sensor_index
+
+	partition Sensor = m
+		mode: import
+		source =
+				let
+					Sensors = SourceDatabase{[Schema = "qualityops", Item = "sensor"]}[Data],
+					CanonicalKeys = Table.SelectColumns(CanonicalVersionRows, {"dataset_version_id"}),
+					Joined = Table.NestedJoin(
+						Sensors,
+						{"dataset_version_id"},
+						CanonicalKeys,
+						{"dataset_version_id"},
+						"Canonical",
+						JoinKind.Inner
+					),
+					Expanded = Table.ExpandTableColumn(
+						Joined,
+						"Canonical",
+						{"dataset_version_id"},
+						{"canonical_dataset_version_id"}
+					),
+					Selected = Table.SelectColumns(Expanded, {"sensor_index", "sensor_key"})
+				in
+					Selected

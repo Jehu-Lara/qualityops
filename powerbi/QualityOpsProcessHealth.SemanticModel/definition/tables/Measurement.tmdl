@@ -1,0 +1,52 @@
+table Measurement
+	lineageTag: 348efa66-043d-4b55-b3b5-eaef91ea9310
+
+	column source_row
+		dataType: int64
+		isHidden
+		lineageTag: cbb16866-b115-4a20-8a8f-290825ad1ab4
+		summarizeBy: none
+		sourceColumn: source_row
+
+	column sensor_index
+		dataType: int64
+		isHidden
+		lineageTag: 6596510b-4ce7-4e81-bdf4-2caa851b2c80
+		summarizeBy: none
+		sourceColumn: sensor_index
+
+	column value
+		dataType: double
+		lineageTag: 76974948-bcf4-4457-b069-711e07adb79f
+		summarizeBy: none
+		sourceColumn: value
+
+	column is_missing = ISBLANK(Measurement[value])
+		dataType: boolean
+		isHidden
+		lineageTag: cbfbbdae-d08c-4f4e-b757-b400ca25375f
+		summarizeBy: none
+
+	partition Measurement = m
+		mode: import
+		source =
+				let
+					Measurements = SourceDatabase{[Schema = "qualityops", Item = "measurement"]}[Data],
+					CanonicalKeys = Table.SelectColumns(CanonicalVersionRows, {"dataset_version_id"}),
+					Joined = Table.NestedJoin(
+						Measurements,
+						{"dataset_version_id"},
+						CanonicalKeys,
+						{"dataset_version_id"},
+						"Canonical",
+						JoinKind.Inner
+					),
+					Expanded = Table.ExpandTableColumn(
+						Joined,
+						"Canonical",
+						{"dataset_version_id"},
+						{"canonical_dataset_version_id"}
+					),
+					Selected = Table.SelectColumns(Expanded, {"source_row", "sensor_index", "value"})
+				in
+					Selected

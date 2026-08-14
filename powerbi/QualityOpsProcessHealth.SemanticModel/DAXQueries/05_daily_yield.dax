@@ -1,0 +1,18 @@
+EVALUATE
+SELECTCOLUMNS(
+    SUMMARIZECOLUMNS(
+        Observation[observed_date],
+        "dataset_version_id_value", MAX(DatasetVersion[dataset_version_id]),
+        "observation_count_value", [Observation Count],
+        "pass_count_value", COALESCE([Pass Count], 0),
+        "fail_count_value", COALESCE([Fail Count], 0),
+        "fail_rate_value", COALESCE([Fail Rate], 0)
+    ),
+    "dataset_version_id", [dataset_version_id_value],
+    "observed_date", Observation[observed_date],
+    "observation_count", [observation_count_value],
+    "pass_count", [pass_count_value],
+    "fail_count", [fail_count_value],
+    "fail_rate", [fail_rate_value]
+)
+ORDER BY [observed_date] ASC

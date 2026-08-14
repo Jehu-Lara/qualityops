@@ -1,0 +1,27 @@
+EVALUATE
+VAR DatasetVersionId = MAX(DatasetVersion[dataset_version_id])
+VAR ExpectedObservations = [Expected Observation Count]
+VAR ActualObservations = [Actual Observation Count]
+VAR ExpectedSensors = [Expected Sensor Count]
+VAR ActualSensors = [Actual Sensor Count]
+VAR ExpectedMeasurements = [Expected Measurement Count]
+VAR ActualMeasurements = [Actual Measurement Count]
+VAR ExpectedMissing = [Expected Missing Measurement Count]
+VAR ActualMissing = [Actual Missing Measurement Count]
+RETURN
+ROW(
+    "dataset_version_id", DatasetVersionId,
+    "expected_observation_count", ExpectedObservations,
+    "actual_observation_count", ActualObservations,
+    "observations_match", ExpectedObservations = ActualObservations,
+    "expected_sensor_count", ExpectedSensors,
+    "actual_sensor_count", ActualSensors,
+    "sensors_match", ExpectedSensors = ActualSensors,
+    "expected_measurement_count", ExpectedMeasurements,
+    "actual_measurement_count", ActualMeasurements,
+    "measurements_match", ExpectedMeasurements = ActualMeasurements,
+    "expected_missing_measurement_count", ExpectedMissing,
+    "actual_missing_measurement_count", ActualMissing,
+    "missing_measurements_match", ExpectedMissing = ActualMissing,
+    "measurements_per_observation_match", [Observations With Invalid Measurement Count] = 0
+)

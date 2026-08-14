@@ -1,0 +1,73 @@
+table Observation
+	lineageTag: a404dbe4-0d5d-4deb-ada5-8f9eceb79928
+
+	column source_row
+		dataType: int64
+		isHidden
+		isKey
+		lineageTag: b420c52a-9b69-475b-9958-2ccc17e3920e
+		summarizeBy: none
+		sourceColumn: source_row
+
+	column observed_at
+		dataType: dateTime
+		formatString: yyyy-MM-dd HH:mm:ss
+		lineageTag: ec38deb1-9e0a-4e8b-8d1e-cb1f80008d02
+		summarizeBy: none
+		sourceColumn: observed_at
+
+	column observed_date =
+			DATE(
+				YEAR(Observation[observed_at]),
+				MONTH(Observation[observed_at]),
+				DAY(Observation[observed_at])
+			)
+		dataType: dateTime
+		formatString: yyyy-MM-dd
+		lineageTag: f15f8081-3d18-44fe-b4ae-2cd797540db9
+		summarizeBy: none
+
+	column outcome
+		dataType: int64
+		isHidden
+		lineageTag: 092858bc-8734-4c98-9ec3-3107f23f39ab
+		summarizeBy: sum
+		sourceColumn: outcome
+
+		annotation SummarizationSetBy = Automatic
+
+	column outcome_name =
+			SWITCH(
+				Observation[outcome],
+				-1, "pass",
+				1, "fail",
+				BLANK()
+			)
+		dataType: string
+		lineageTag: ecde9992-78cf-4325-96e2-41aa66ad61f9
+		summarizeBy: none
+		sortByColumn: outcome
+
+	partition Observation = m
+		mode: import
+		source =
+				let
+					Observations = SourceDatabase{[Schema = "qualityops", Item = "observation"]}[Data],
+					CanonicalKeys = Table.SelectColumns(CanonicalVersionRows, {"dataset_version_id"}),
+					Joined = Table.NestedJoin(
+						Observations,
+						{"dataset_version_id"},
+						CanonicalKeys,
+						{"dataset_version_id"},
+						"Canonical",
+						JoinKind.Inner
+					),
+					Expanded = Table.ExpandTableColumn(
+						Joined,
+						"Canonical",
+						{"dataset_version_id"},
+						{"canonical_dataset_version_id"}
+					),
+					Selected = Table.SelectColumns(Expanded, {"source_row", "observed_at", "outcome"})
+				in
+					Selected

@@ -1,0 +1,31 @@
+EVALUATE
+SELECTCOLUMNS(
+    SUMMARIZECOLUMNS(
+        Sensor[sensor_index],
+        Sensor[sensor_key],
+        "dataset_version_id_value", MAX(DatasetVersion[dataset_version_id]),
+        "pass_count_value", [Pass Nonmissing Count],
+        "pass_mean_value", [Pass Mean],
+        "pass_sample_variance_value", [Pass Sample Variance],
+        "fail_count_value", [Fail Nonmissing Count],
+        "fail_mean_value", [Fail Mean],
+        "fail_sample_variance_value", [Fail Sample Variance],
+        "pooled_variance_value", [Pooled Variance],
+        "standardized_mean_difference_value", [Standardized Mean Difference]
+    ),
+    "dataset_version_id", [dataset_version_id_value],
+    "sensor_index", Sensor[sensor_index],
+    "sensor_key", Sensor[sensor_key],
+    "pass_count", [pass_count_value],
+    "pass_mean", [pass_mean_value],
+    "pass_sample_variance", [pass_sample_variance_value],
+    "fail_count", [fail_count_value],
+    "fail_mean", [fail_mean_value],
+    "fail_sample_variance", [fail_sample_variance_value],
+    "pooled_variance", [pooled_variance_value],
+    "standardized_mean_difference", [standardized_mean_difference_value]
+)
+ORDER BY
+    ISBLANK([standardized_mean_difference]) ASC,
+    ABS([standardized_mean_difference]) DESC,
+    [sensor_index] ASC

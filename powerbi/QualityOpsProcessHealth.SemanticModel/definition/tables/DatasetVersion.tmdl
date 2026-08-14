@@ -1,0 +1,155 @@
+table DatasetVersion
+	lineageTag: e5aec9cd-8857-4332-92a8-24cc8f2487cf
+
+	column dataset_version_id
+		dataType: int64
+		isHidden
+		lineageTag: 6d0b6bf2-f0d4-4d6d-8a33-d5845df0b1ec
+		summarizeBy: sum
+		sourceColumn: dataset_version_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column dataset_code
+		dataType: string
+		lineageTag: 318966e9-9eab-44b7-a6b1-9399ef3e76d3
+		summarizeBy: none
+		sourceColumn: dataset_code
+
+	column name
+		dataType: string
+		lineageTag: fcf598c2-66cd-432e-9a4c-448dd3f493a4
+		summarizeBy: none
+		sourceColumn: name
+
+	column publisher
+		dataType: string
+		lineageTag: 5e339fb1-4615-4398-9720-b76da6e86bc0
+		summarizeBy: none
+		sourceColumn: publisher
+
+	column doi
+		dataType: string
+		lineageTag: 5c4adb6c-6522-4a75-b8e0-7b0ce0d1c23b
+		dataCategory: WebUrl
+		summarizeBy: none
+		sourceColumn: doi
+
+	column source_url
+		dataType: string
+		lineageTag: 5ef08a18-b484-453b-bd34-402c3173aafb
+		dataCategory: WebUrl
+		summarizeBy: none
+		sourceColumn: source_url
+
+	column license_spdx
+		dataType: string
+		lineageTag: fc86410f-49f5-4761-85fb-fd87e4169afb
+		summarizeBy: none
+		sourceColumn: license_spdx
+
+	column version_label
+		dataType: string
+		lineageTag: 92583d8f-89a0-4b86-8060-6b00429bbd41
+		summarizeBy: none
+		sourceColumn: version_label
+
+	column content_fingerprint
+		dataType: string
+		isHidden
+		lineageTag: 17fcb428-d20e-4d54-96c5-8e0df725ed78
+		summarizeBy: none
+		sourceColumn: content_fingerprint
+
+	column acquired_on
+		dataType: dateTime
+		formatString: yyyy-MM-dd
+		lineageTag: 3fda8c7a-64a5-4108-be1e-d2995c7c2a05
+		summarizeBy: none
+		sourceColumn: acquired_on
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column loaded_at
+		dataType: dateTime
+		isHidden
+		formatString: yyyy-MM-dd HH:mm:ss
+		lineageTag: 92fe3208-b361-4867-b748-6369ad40e658
+		summarizeBy: none
+		sourceColumn: loaded_at
+
+	column audit_schema_version
+		dataType: int64
+		isHidden
+		lineageTag: 58e0631c-0ba1-4f02-84d5-7cd0281a7132
+		summarizeBy: sum
+		sourceColumn: audit_schema_version
+
+		annotation SummarizationSetBy = Automatic
+
+	column observation_count
+		dataType: int64
+		isHidden
+		formatString: #,0
+		lineageTag: 78df588f-fb1c-48ae-927c-860d2b06a1d9
+		summarizeBy: sum
+		sourceColumn: observation_count
+
+		annotation SummarizationSetBy = Automatic
+
+	column sensor_count
+		dataType: int64
+		isHidden
+		formatString: #,0
+		lineageTag: c83b044f-9f92-4087-a523-4452853d9f14
+		summarizeBy: sum
+		sourceColumn: sensor_count
+
+		annotation SummarizationSetBy = Automatic
+
+	column measurement_count
+		dataType: int64
+		isHidden
+		formatString: #,0
+		lineageTag: 5be2e1c8-ad3c-41c0-a16f-e5a9033e3ce8
+		summarizeBy: sum
+		sourceColumn: measurement_count
+
+		annotation SummarizationSetBy = Automatic
+
+	column missing_measurement_count
+		dataType: int64
+		isHidden
+		formatString: #,0
+		lineageTag: 4e5a8ce3-e497-4cce-bee4-13a8dea8f796
+		summarizeBy: sum
+		sourceColumn: missing_measurement_count
+
+		annotation SummarizationSetBy = Automatic
+
+	partition DatasetVersion = m
+		mode: import
+		source =
+				let
+					Guarded = CanonicalVersionGuard,
+					AsTable = Table.FromRecords({Guarded}),
+					TypedWithZone = Table.TransformColumnTypes(
+						AsTable,
+						{
+							{"dataset_version_id", Int64.Type}, {"dataset_code", type text},
+							{"name", type text}, {"publisher", type text}, {"doi", type text},
+							{"source_url", type text}, {"license_spdx", type text},
+							{"version_label", type text}, {"content_fingerprint", type text},
+							{"acquired_on", type date}, {"loaded_at", type datetimezone},
+							{"audit_schema_version", Int64.Type}, {"observation_count", Int64.Type},
+							{"sensor_count", Int64.Type}, {"measurement_count", Int64.Type},
+							{"missing_measurement_count", Int64.Type}
+						},
+						"en-US"
+					),
+					UtcLoadedAt = Table.TransformColumns(
+						TypedWithZone,
+						{{"loaded_at", each DateTimeZone.RemoveZone(DateTimeZone.ToUtc(_)), type datetime}}
+					)
+				in
+					UtcLoadedAt

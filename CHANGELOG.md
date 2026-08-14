@@ -10,6 +10,10 @@ All notable changes are documented here. The project follows semantic versioning
   including named relational constraints, Alembic migration and rollback,
   an idempotent transactional loader, and twenty audited read-only SQL queries.
 - Added the public UCI SECOM manufacturing dataset with verified acquisition hashes, deterministic quality auditing, documented provenance, and CLI support.
+- Added the one-page Power BI PBIP/PBIR/TMDL Process Health project,
+  PostgreSQL least-privilege reader lifecycle, six reconciled DAX validation
+  exports, accessibility metadata, and an authentic sanitized canvas preview.
+  PR checks and Required-check governance remain pending.
 
 ## 0.2.0 — 2026-08-09
 

@@ -1,0 +1,17 @@
+EVALUATE
+SELECTCOLUMNS(
+    DatasetVersion,
+    "dataset_version_id", DatasetVersion[dataset_version_id],
+    "dataset_code", DatasetVersion[dataset_code],
+    "name", DatasetVersion[name],
+    "publisher", DatasetVersion[publisher],
+    "doi", DatasetVersion[doi],
+    "source_url", DatasetVersion[source_url],
+    "license_spdx", DatasetVersion[license_spdx],
+    "version_label", DatasetVersion[version_label],
+    "acquired_on", DatasetVersion[acquired_on],
+    "loaded_at", DatasetVersion[loaded_at],
+    "audit_schema_version", DatasetVersion[audit_schema_version],
+    "content_fingerprint", DatasetVersion[content_fingerprint]
+)
+ORDER BY [dataset_version_id]

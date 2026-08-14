@@ -8,6 +8,7 @@ import math
 import os
 from pathlib import Path
 import re
+import shutil
 import struct
 import subprocess
 import sys
@@ -34,6 +35,7 @@ EXPECTED_REVISION = "0001_secom_persistence"
 _ORIGINAL_ADD_SKIP = None
 _SKIP_COUNT = 0
 _DATABASE_URL = ""
+_READER_DATABASE_URL = ""
 
 _CONTRACT_RELATIONS = {
     ("public", "alembic_version", "r"),
@@ -85,6 +87,64 @@ def _run_alembic(arguments: list[str], *, expect_success: bool = True) -> subpro
     if not expect_success and completed.returncode == 0:
         raise AssertionError("Alembic unexpectedly succeeded")
     return completed
+
+
+def _psql_environment(database_url: str) -> dict[str, str]:
+    fields = conninfo_to_dict(database_url)
+    environment = os.environ.copy()
+    for name in (
+        "PGDATABASE", "PGHOST", "PGHOSTADDR", "PGPORT", "PGUSER", "PGPASSWORD",
+        "PGSERVICE", "PGSERVICEFILE", "PGPASSFILE",
+    ):
+        environment.pop(name, None)
+    mapping = {
+        "dbname": "PGDATABASE",
+        "host": "PGHOST",
+        "port": "PGPORT",
+        "user": "PGUSER",
+        "password": "PGPASSWORD",
+    }
+    for source, target in mapping.items():
+        value = fields.get(source)
+        if value:
+            environment[target] = str(value)
+    return environment
+
+
+def _psql_executable() -> str:
+    executable = shutil.which("psql")
+    if executable:
+        return executable
+    if sys.platform == "win32":
+        program_files = os.environ.get("ProgramFiles")
+        if program_files:
+            candidate = Path(program_files) / "PostgreSQL" / "16" / "bin" / "psql.exe"
+            if candidate.is_file():
+                return str(candidate)
+    raise FileNotFoundError("PostgreSQL 16 psql was not found on PATH or its standard Windows path")
+
+
+def _run_powerbi_owner_script(name: str) -> None:
+    script = REPOSITORY_ROOT / "powerbi" / "postgresql" / name
+    completed = subprocess.run(
+        [
+            _psql_executable(),
+            "--no-psqlrc",
+            "--set=ON_ERROR_STOP=1",
+            f"--set=expected_database={EXPECTED_DATABASE}",
+            f"--set=expected_owner={EXPECTED_OWNER}",
+            f"--file={script}",
+        ],
+        cwd=REPOSITORY_ROOT,
+        env=_psql_environment(_DATABASE_URL),
+        capture_output=True,
+        text=True,
+    )
+    if completed.returncode != 0:
+        raise AssertionError(
+            f"Power BI owner script {name} failed with code {completed.returncode}: "
+            f"{completed.stdout}\n{completed.stderr}"
+        )
 
 
 @contextmanager
@@ -143,7 +203,7 @@ def _assert_empty_database() -> None:
 
 
 def setUpModule() -> None:
-    global _ORIGINAL_ADD_SKIP, _SKIP_COUNT, _DATABASE_URL
+    global _ORIGINAL_ADD_SKIP, _SKIP_COUNT, _DATABASE_URL, _READER_DATABASE_URL
     flag = os.environ.get("QUALITYOPS_RUN_POSTGRES_INTEGRATION")
     if flag is None:
         raise unittest.SkipTest(
@@ -154,6 +214,11 @@ def setUpModule() -> None:
     _DATABASE_URL = os.environ.get("QUALITYOPS_TEST_DATABASE_URL", "")
     if not _DATABASE_URL:
         raise RuntimeError("QUALITYOPS_TEST_DATABASE_URL is required for integration")
+    _READER_DATABASE_URL = os.environ.get("QUALITYOPS_POWERBI_READER_DATABASE_URL", "")
+    if not _READER_DATABASE_URL:
+        raise RuntimeError(
+            "QUALITYOPS_POWERBI_READER_DATABASE_URL is required for integration"
+        )
 
     connection_fields = conninfo_to_dict(_DATABASE_URL)
     database_name = connection_fields.get("dbname")
@@ -947,6 +1012,234 @@ class PostgreSQLIntegrationTests(unittest.TestCase):
                 with connection.cursor() as cursor:
                     cursor.execute("DELETE FROM qualityops.dataset_version WHERE dataset_version_id=%s", (version_id,))
                 connection.commit()
+
+    def test_10_powerbi_reader_has_exact_effective_application_privileges(self) -> None:
+        reader_fields = conninfo_to_dict(_READER_DATABASE_URL)
+        self.assertEqual(reader_fields.get("dbname"), EXPECTED_DATABASE)
+        self.assertEqual(reader_fields.get("user"), "qualityops_powerbi_reader")
+
+        self._upgrade()
+        first = persist_secom(DATA_DIRECTORY, _DATABASE_URL)
+        second = persist_secom(DATA_DIRECTORY, _DATABASE_URL)
+        self.assertIn(first.status, {"loaded", "already_loaded"})
+        self.assertEqual(second.status, "already_loaded")
+
+        _run_powerbi_owner_script("01_harden_database.sql")
+        _run_powerbi_owner_script("03_grant_reader_access.sql")
+        reader_engine = None
+        try:
+            with _connection() as owner_connection:
+                with owner_connection.cursor() as cursor:
+                    cursor.execute(
+                        """SELECT rolcanlogin, rolsuper, rolcreatedb, rolcreaterole,
+                                  rolinherit, rolreplication, rolbypassrls, rolconnlimit
+                           FROM pg_roles
+                           WHERE rolname = 'qualityops_powerbi_reader'"""
+                    )
+                    self.assertEqual(
+                        cursor.fetchone(),
+                        (True, False, False, False, False, False, False, 5),
+                    )
+                    cursor.execute(
+                        """SELECT granted.rolname
+                           FROM pg_auth_members AS member
+                           JOIN pg_roles AS granted ON granted.oid = member.roleid
+                           JOIN pg_roles AS recipient ON recipient.oid = member.member
+                           WHERE recipient.rolname = 'qualityops_powerbi_reader'
+                           ORDER BY granted.rolname"""
+                    )
+                    self.assertEqual(cursor.fetchall(), [])
+                    cursor.execute(
+                        """SELECT n.nspname, c.relname
+                           FROM pg_class AS c
+                           JOIN pg_namespace AS n ON n.oid = c.relnamespace
+                           JOIN pg_roles AS owner ON owner.oid = c.relowner
+                           WHERE owner.rolname = 'qualityops_powerbi_reader'
+                           UNION ALL
+                           SELECT n.nspname, n.nspname
+                           FROM pg_namespace AS n
+                           JOIN pg_roles AS owner ON owner.oid = n.nspowner
+                           WHERE owner.rolname = 'qualityops_powerbi_reader'
+                           ORDER BY 1, 2"""
+                    )
+                    self.assertEqual(cursor.fetchall(), [])
+                    cursor.execute(
+                        """SELECT table_schema, table_name, privilege_type, is_grantable
+                           FROM information_schema.role_table_grants
+                           WHERE grantee = 'qualityops_powerbi_reader'
+                           ORDER BY table_schema, table_name, privilege_type"""
+                    )
+                    self.assertEqual(
+                        cursor.fetchall(),
+                        [
+                            ("qualityops", "dataset", "SELECT", "NO"),
+                            ("qualityops", "dataset_version", "SELECT", "NO"),
+                            ("qualityops", "measurement", "SELECT", "NO"),
+                            ("qualityops", "observation", "SELECT", "NO"),
+                            ("qualityops", "sensor", "SELECT", "NO"),
+                        ],
+                    )
+                    cursor.execute(
+                        """SELECT n.nspname, c.relname, acl.privilege_type
+                           FROM pg_class AS c
+                           JOIN pg_namespace AS n ON n.oid = c.relnamespace
+                           CROSS JOIN LATERAL aclexplode(
+                               COALESCE(
+                                   c.relacl,
+                                   acldefault(CASE WHEN c.relkind = 'S' THEN 'S'::\"char\" ELSE 'r'::\"char\" END, c.relowner)
+                               )
+                           ) AS acl
+                           WHERE n.nspname = 'qualityops'
+                             AND acl.grantee = 0
+                           ORDER BY n.nspname, c.relname, acl.privilege_type"""
+                    )
+                    self.assertEqual(cursor.fetchall(), [])
+                owner_connection.rollback()
+
+            with psycopg.connect(
+                _READER_DATABASE_URL,
+                autocommit=False,
+                application_name="qualityops-powerbi-reader-test",
+            ) as reader_connection:
+                with reader_connection.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT current_database(), current_user, current_setting('server_version_num'), current_setting('search_path')"
+                    )
+                    database, user, version, search_path = cursor.fetchone()
+                    self.assertEqual(database, EXPECTED_DATABASE)
+                    self.assertEqual(user, "qualityops_powerbi_reader")
+                    self.assertTrue(160000 <= int(version) < 170000)
+                    self.assertEqual(search_path, "pg_catalog, qualityops")
+                    cursor.execute(
+                        """SELECT
+                           has_database_privilege(current_user, current_database(), 'CONNECT'),
+                           has_database_privilege(current_user, current_database(), 'CREATE'),
+                           has_database_privilege(current_user, current_database(), 'TEMPORARY'),
+                           has_schema_privilege(current_user, 'qualityops', 'USAGE'),
+                           has_schema_privilege(current_user, 'qualityops', 'CREATE'),
+                           has_schema_privilege(current_user, 'public', 'USAGE'),
+                           has_schema_privilege(current_user, 'public', 'CREATE')"""
+                    )
+                    self.assertEqual(
+                        cursor.fetchone(),
+                        (True, False, False, True, False, False, False),
+                    )
+                    allowed = (
+                        "dataset", "dataset_version", "observation", "sensor", "measurement"
+                    )
+                    for relation in allowed:
+                        cursor.execute(
+                            f"SELECT COUNT(*) FROM qualityops.{relation}"
+                        )
+                        self.assertIsInstance(cursor.fetchone()[0], int)
+                    cursor.execute(
+                        """SELECT
+                           (SELECT COUNT(*) FROM qualityops.dataset),
+                           (SELECT COUNT(*) FROM qualityops.dataset_version),
+                           (SELECT COUNT(*) FROM qualityops.observation),
+                           (SELECT COUNT(*) FROM qualityops.sensor),
+                           (SELECT COUNT(*) FROM qualityops.measurement)"""
+                    )
+                    counts_before = cursor.fetchone()
+                    cursor.execute(
+                        """SELECT dv.dataset_version_id
+                           FROM qualityops.dataset AS d
+                           JOIN qualityops.dataset_version AS dv ON dv.dataset_id = d.dataset_id
+                           WHERE d.dataset_code = %s
+                             AND dv.version_label = %s
+                             AND dv.content_fingerprint = %s""",
+                        (
+                            persistence._DATASET_CODE,
+                            persistence._VERSION_LABEL,
+                            persistence._EXPECTED_FINGERPRINT,
+                        ),
+                    )
+                    version_id = cursor.fetchone()[0]
+                reader_connection.rollback()
+
+                forbidden_statements = (
+                    "SELECT COUNT(*) FROM qualityops.source_file",
+                    "SELECT COUNT(*) FROM qualityops.v_measurement_fact",
+                    "SELECT COUNT(*) FROM public.alembic_version",
+                    "INSERT INTO qualityops.dataset (dataset_code, name, publisher, source_url, license_spdx) VALUES ('forbidden', 'forbidden', 'forbidden', 'https://example.invalid', 'MIT')",
+                    "UPDATE qualityops.dataset SET name = name WHERE false",
+                    "DELETE FROM qualityops.dataset WHERE false",
+                    "TRUNCATE qualityops.measurement",
+                    "CREATE TEMP TABLE denied_temp (value INTEGER)",
+                    "CREATE TABLE qualityops.denied_table (value INTEGER)",
+                    "CREATE TABLE public.denied_table (value INTEGER)",
+                    "SET ROLE qualityops_test_owner",
+                    "SET SESSION AUTHORIZATION qualityops_test_owner",
+                )
+                for statement in forbidden_statements:
+                    with self.subTest(statement=statement.split()[0:3]):
+                        with self.assertRaises(psycopg.errors.InsufficientPrivilege):
+                            with reader_connection.cursor() as cursor:
+                                cursor.execute(statement)
+                        reader_connection.rollback()
+                with self.assertRaises(psycopg.errors.InsufficientPrivilege):
+                    with reader_connection.cursor() as cursor:
+                        with cursor.copy(
+                            "COPY qualityops.dataset (dataset_code, name, publisher, source_url, license_spdx) FROM STDIN"
+                        ):
+                            pass
+                reader_connection.rollback()
+                with reader_connection.cursor() as cursor:
+                    cursor.execute(
+                        """SELECT
+                           (SELECT COUNT(*) FROM qualityops.dataset),
+                           (SELECT COUNT(*) FROM qualityops.dataset_version),
+                           (SELECT COUNT(*) FROM qualityops.observation),
+                           (SELECT COUNT(*) FROM qualityops.sensor),
+                           (SELECT COUNT(*) FROM qualityops.measurement)"""
+                    )
+                    self.assertEqual(cursor.fetchone(), counts_before)
+                reader_connection.rollback()
+
+            reader_engine = create_engine(
+                make_url(_READER_DATABASE_URL).set(drivername="postgresql+psycopg"),
+                echo=False,
+            )
+            outputs = {
+                name: self._query(reader_engine, name, {"dataset_version_id": version_id})
+                for name in (
+                    "01_dataset_provenance.sql",
+                    "03_load_reconciliation.sql",
+                    "04_outcome_distribution.sql",
+                    "05_daily_yield.sql",
+                    "07_sensor_missingness.sql",
+                    "13_standardized_mean_difference.sql",
+                )
+            }
+            self.assertEqual(
+                [len(outputs[name]) for name in outputs],
+                [1, 1, 2, 86, 590, 590],
+            )
+            reconciliation = outputs["03_load_reconciliation.sql"][0]
+            for name in (
+                "observations_match", "sensors_match", "measurements_match",
+                "missing_measurements_match", "measurements_per_observation_match",
+            ):
+                self.assertIs(reconciliation[name], True)
+            self.assertEqual(
+                [(row["outcome_name"], row["observation_count"]) for row in outputs["04_outcome_distribution.sql"]],
+                [("pass", 1463), ("fail", 104)],
+            )
+            self.assertEqual(
+                [row["sensor_index"] for row in sorted(outputs["07_sensor_missingness.sql"], key=lambda row: (-row["missing_rate"], row["sensor_index"]))[:10]],
+                [157, 158, 292, 293, 85, 220, 358, 492, 109, 110],
+            )
+            smd = outputs["13_standardized_mean_difference.sql"]
+            self.assertEqual(sum(row["standardized_mean_difference"] is not None for row in smd), 474)
+            self.assertEqual(sum(row["standardized_mean_difference"] is None for row in smd), 116)
+            self.assertEqual(
+                [row["sensor_index"] for row in smd[:10]],
+                [59, 103, 510, 348, 158, 111, 431, 293, 85, 434],
+            )
+        finally:
+            if reader_engine is not None:
+                reader_engine.dispose()
+            _run_powerbi_owner_script("04_revoke_reader_access.sql")
 
 
 if __name__ == "__main__":

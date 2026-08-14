@@ -20,6 +20,16 @@ data/*.csv
 data/*.parquet
 !data/README.md
 
-# Power BI binaries can be large and may contain embedded data.
-powerbi/*.pbix
+# Power BI local state, binaries, caches, and raw validation exports.
+powerbi/**/*.pbix
+powerbi/**/*.pbit
+powerbi/**/*.pbids
+powerbi/**/.pbi/localSettings.json
+powerbi/**/.pbi/cache.abf
+powerbi/**/.pbi/unappliedChanges.json
+powerbi/**/.pbi/daxQueries.json
+powerbi/**/.pbi/tmdlscripts.json
+powerbi/**/TMDLScripts/
+powerbi/**/.platform
+powerbi/validation/raw/
 !powerbi/README.md

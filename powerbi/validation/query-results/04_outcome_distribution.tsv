@@ -1,0 +1,3 @@
+dataset_version_id	outcome	outcome_name	observation_count	observation_percentage
+NON_NULL_BIGINT	-1	pass	1463	93.363114231014677
+NON_NULL_BIGINT	1	fail	104	6.636885768985322

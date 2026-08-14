@@ -1,0 +1,20 @@
+EVALUATE
+SELECTCOLUMNS(
+    SUMMARIZECOLUMNS(
+        Sensor[sensor_index],
+        Sensor[sensor_key],
+        "dataset_version_id_value", MAX(DatasetVersion[dataset_version_id]),
+        "measurement_count_value", [Measurement Count],
+        "nonmissing_count_value", [Nonmissing Count],
+        "missing_count_value", COALESCE([Missing Measurement Count], 0),
+        "missing_rate_value", COALESCE([Missing Rate], 0)
+    ),
+    "dataset_version_id", [dataset_version_id_value],
+    "sensor_index", Sensor[sensor_index],
+    "sensor_key", Sensor[sensor_key],
+    "measurement_count", [measurement_count_value],
+    "nonmissing_count", [nonmissing_count_value],
+    "missing_count", [missing_count_value],
+    "missing_rate", [missing_rate_value]
+)
+ORDER BY [sensor_index] ASC

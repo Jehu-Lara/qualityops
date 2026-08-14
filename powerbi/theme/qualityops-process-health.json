@@ -1,0 +1,31 @@
+{
+  "name": "QualityOps Process Health",
+  "dataColors": [
+    "#175CD3",
+    "#B42318",
+    "#1B7F5A",
+    "#B54708"
+  ],
+  "background": "#F7F9FC",
+  "foreground": "#17233C",
+  "neutral": "#FFFFFF",
+  "tableAccent": "#175CD3",
+  "textClasses": {
+    "callout": {
+      "fontFace": "Segoe UI",
+      "color": "#17233C"
+    },
+    "title": {
+      "fontFace": "Segoe UI",
+      "color": "#17233C"
+    },
+    "header": {
+      "fontFace": "Segoe UI",
+      "color": "#17233C"
+    },
+    "label": {
+      "fontFace": "Segoe UI",
+      "color": "#17233C"
+    }
+  }
+}

@@ -39,7 +39,7 @@ jobs:
         run: python -m unittest discover -v
 
       - name: Compile source
-        run: python -m compileall -q src tests
+        run: python -m compileall -q src tests powerbi/validation
 
       - name: Smoke-test CLI
         run: qualityops analyze --values 9 10 11 --lsl 7 --usl 13
@@ -77,14 +77,103 @@ jobs:
           sudo -u postgres psql --no-psqlrc --set=ON_ERROR_STOP=1 \
             --command "CREATE ROLE qualityops_test_owner LOGIN PASSWORD '$password'"
           sudo -u postgres createdb --owner=qualityops_test_owner qualityops_test_secom
+          echo "QUALITYOPS_TEST_OWNER_PASSWORD=$password" >> "$GITHUB_ENV"
           echo "QUALITYOPS_TEST_DATABASE_URL=postgresql://qualityops_test_owner:$password@127.0.0.1:5432/qualityops_test_secom" >> "$GITHUB_ENV"
 
       - name: Apply Alembic migration
         shell: bash
         run: QUALITYOPS_DATABASE_URL="$QUALITYOPS_TEST_DATABASE_URL" python -m alembic upgrade head
 
-      - name: Run mandatory PostgreSQL integration
+      - name: Create reader, run mandatory PostgreSQL integration, and clean up
         shell: bash
         run: |
-          QUALITYOPS_RUN_POSTGRES_INTEGRATION=1 \
+          set -Eeuo pipefail
+          marker="$RUNNER_TEMP/qualityops_powerbi_reader_created"
+          reader_password="$(openssl rand -hex 32)"
+          echo "::add-mask::$reader_password"
+          export QUALITYOPS_POWERBI_READER_PASSWORD="$reader_password"
+
+          cleanup_reader() {
+            local cleanup_status=0
+            unset QUALITYOPS_POWERBI_READER_DATABASE_URL
+            unset QUALITYOPS_POWERBI_READER_PASSWORD
+            if [[ ! -f "$marker" ]]; then
+              return 0
+            fi
+            PGPASSWORD="$QUALITYOPS_TEST_OWNER_PASSWORD" \
+              psql --no-psqlrc --set=ON_ERROR_STOP=1 \
+                --host=127.0.0.1 --port=5432 \
+                --username=qualityops_test_owner --dbname=qualityops_test_secom \
+                --set=expected_database=qualityops_test_secom \
+                --set=expected_owner=qualityops_test_owner \
+                --file=powerbi/postgresql/04_revoke_reader_access.sql \
+              || cleanup_status=1
+            sudo -u postgres psql --no-psqlrc --set=ON_ERROR_STOP=1 \
+              --set=expected_database=qualityops_test_secom \
+              --set=expected_owner=qualityops_test_owner \
+              --file=powerbi/postgresql/05_drop_reader_role.sql \
+              || cleanup_status=1
+            if [[ "$cleanup_status" -eq 0 ]]; then
+              rm -f "$marker"
+            fi
+            return "$cleanup_status"
+          }
+
+          on_exit() {
+            local status=$?
+            trap - EXIT
+            cleanup_reader || status=1
+            exit "$status"
+          }
+          trap on_exit EXIT
+
+          sudo --preserve-env=QUALITYOPS_POWERBI_READER_PASSWORD -u postgres \
+            psql --no-psqlrc --set=ON_ERROR_STOP=1 \
+              --set=expected_database=qualityops_test_secom \
+              --set=expected_owner=qualityops_test_owner \
+              --file=powerbi/postgresql/02_create_reader_role.sql
+          touch "$marker"
+          sudo -u postgres psql --no-psqlrc --tuples-only --no-align \
+            --set=ON_ERROR_STOP=1 \
+            --command "SELECT rolpassword LIKE 'SCRAM-SHA-256$%' FROM pg_authid WHERE rolname = 'qualityops_powerbi_reader'" \
+            | grep --fixed-strings --line-regexp t > /dev/null
+
+          reader_url="postgresql://qualityops_powerbi_reader:$reader_password@127.0.0.1:5432/qualityops_test_secom"
+          echo "::add-mask::$reader_url"
+          export QUALITYOPS_POWERBI_READER_DATABASE_URL="$reader_url"
+          export QUALITYOPS_RUN_POSTGRES_INTEGRATION=1
           python -m unittest -v tests.test_postgres_integration
+
+      - name: Backstop reader cleanup
+        if: always()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          marker="$RUNNER_TEMP/qualityops_powerbi_reader_created"
+          if [[ ! -f "$marker" ]]; then
+            exit 0
+          fi
+          role_exists="$(sudo -u postgres psql --no-psqlrc --tuples-only --no-align --command "SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'qualityops_powerbi_reader')")"
+          if [[ "$role_exists" == "t" ]]; then
+            PGPASSWORD="$QUALITYOPS_TEST_OWNER_PASSWORD" \
+              psql --no-psqlrc --set=ON_ERROR_STOP=1 \
+                --host=127.0.0.1 --port=5432 \
+                --username=qualityops_test_owner --dbname=qualityops_test_secom \
+                --set=expected_database=qualityops_test_secom \
+                --set=expected_owner=qualityops_test_owner \
+                --file=powerbi/postgresql/04_revoke_reader_access.sql
+            sudo -u postgres psql --no-psqlrc --set=ON_ERROR_STOP=1 \
+              --set=expected_database=qualityops_test_secom \
+              --set=expected_owner=qualityops_test_owner \
+              --file=powerbi/postgresql/05_drop_reader_role.sql
+          fi
+          rm -f "$marker"
+
+      - name: Confirm reader cleanup
+        if: always()
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test ! -e "$RUNNER_TEMP/qualityops_powerbi_reader_created"
+          role_exists="$(sudo -u postgres psql --no-psqlrc --tuples-only --no-align --command "SELECT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'qualityops_powerbi_reader')")"
+          test "$role_exists" = "f"
