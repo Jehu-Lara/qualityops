@@ -1,5 +1,9 @@
 # QualityOps 
 
+[![CI](https://img.shields.io/github/actions/workflow/status/Jehu-Lara/qualityops/ci.yml?branch=main&label=CI)](https://github.com/Jehu-Lara/qualityops/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/github/license/Jehu-Lara/qualityops)](LICENSE)
+![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)
+
 Auditable process-performance and capability analysis for manufacturing data.
 
 QualityOps is a focused Python portfolio project for loading measurement data, exposing basic data-quality risks, and reproducing selected Minitab metrics with explicit statistical assumptions. The implementation favors traceability and correct terminology over a large feature list.
