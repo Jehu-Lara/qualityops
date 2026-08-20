@@ -28,6 +28,14 @@ from qualityops.persistence import (
     SecomPersistenceResult,
     persist_secom,
 )
+from qualityops.spc import (
+    SubgroupCapabilityResult,
+    XbarRChartResult,
+    analyze_subgroup_capability,
+    analyze_xbar_r,
+    calculate_cpm,
+    load_wide_subgroups,
+)
 
 __all__ = [
     "OverallPerformanceResult",
@@ -53,6 +61,12 @@ __all__ = [
     "load_secom",
     "SecomPersistenceResult",
     "persist_secom",
+    "SubgroupCapabilityResult",
+    "XbarRChartResult",
+    "analyze_subgroup_capability",
+    "analyze_xbar_r",
+    "calculate_cpm",
+    "load_wide_subgroups",
 ]
 
 __version__ = "0.2.0"

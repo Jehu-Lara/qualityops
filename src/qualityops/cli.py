@@ -22,6 +22,7 @@ from qualityops.persistence import (
     persist_secom,
 )
 from qualityops.secom import audit_secom
+from qualityops.spc import analyze_subgroup_capability, load_wide_subgroups
 
 
 _JSON_ARGUMENT_ERRORS = False
@@ -72,6 +73,25 @@ def build_parser() -> argparse.ArgumentParser:
     source.add_argument("--file", type=Path)
     analyze_parser.add_argument(
         "--column", help="Measurement column; required with --file."
+    )
+
+    spc_parser = subparsers.add_parser(
+        "spc",
+        help="Calculate Xbar-R and capability from equal-size CSV subgroups.",
+    )
+    spc_parser.add_argument("--file", type=Path, required=True)
+    spc_parser.add_argument(
+        "--columns",
+        nargs="+",
+        required=True,
+        help="Ordered measurement columns forming each rational subgroup.",
+    )
+    spc_parser.add_argument("--lsl", type=float, required=True)
+    spc_parser.add_argument("--usl", type=float, required=True)
+    spc_parser.add_argument(
+        "--target",
+        type=float,
+        help="Optional target; when supplied, Cpm is included.",
     )
     analyze_parser.add_argument("--sheet", default="0")
     analyze_parser.add_argument("--lsl", type=float, required=True)
@@ -147,6 +167,24 @@ def _analysis_payload(args: argparse.Namespace) -> dict[str, Any]:
 
 def _secom_audit_payload(args: argparse.Namespace) -> dict[str, Any]:
     return audit_secom(args.data_dir).to_dict()
+
+
+def _spc_payload(args: argparse.Namespace) -> dict[str, Any]:
+    subgroups = load_wide_subgroups(args.file, args.columns)
+    result = analyze_subgroup_capability(
+        subgroups,
+        lsl=args.lsl,
+        usl=args.usl,
+        target=args.target,
+    )
+    return {
+        "source": {
+            "kind": "wide_csv_subgroups",
+            "path": str(args.file),
+            "measurement_columns": list(args.columns),
+        },
+        "analysis": asdict(result),
+    }
 
 
 _PERSISTENCE_ERRORS = {
@@ -226,6 +264,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             payload = _analysis_payload(args)
         elif args.command == "audit-secom":
             payload = _secom_audit_payload(args)
+        elif args.command == "spc":
+            payload = _spc_payload(args)
         elif args.command == "load-secom-postgres":
             return _run_persistence_command(args)
         else:  # pragma: no cover - argparse restricts this value.

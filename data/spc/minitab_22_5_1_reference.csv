@@ -1,0 +1,18 @@
+metric,minitab_value,method
+grand_mean,500.1301299999999,mean of 100 observations
+average_range,1.8744000000000023,mean of 25 subgroup ranges
+within_sigma,0.9103448275862079,Rbar divided by d2 for n=4
+overall_sigma,0.9275845209658025,sample standard deviation N-1
+xbar_lcl,498.76461275862056,three-sigma Xbar limit
+xbar_ucl,501.49564724137923,three-sigma Xbar limit
+range_lcl,0,R chart lower limit
+range_ucl,4.27716413793104,R chart upper limit
+cp,1.8308080808080787,Rbar within sigma
+cpk,1.7831594696970061,Rbar within sigma
+pp,1.7967814565634739,overall sample sigma
+ppk,1.7500184223749908,overall sample sigma
+cpm,1.7881467512164682,RMS deviation from target 500
+xbar_test1_violations,0,points beyond three-sigma limits
+range_test1_violations,0,points beyond three-sigma limits
+normality_ad,0.293,displayed precision
+normality_p_value,0.598,displayed precision

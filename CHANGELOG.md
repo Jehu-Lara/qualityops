@@ -6,6 +6,15 @@ All notable changes are documented here. The project follows semantic versioning
 
 ### Added
 
+- Added equal-size Xbar-R analysis with `Rbar/d2` within-sigma estimation,
+  three-sigma limits, Test 1, subgroup-derived capability indices and a public
+  CLI path.
+- Added a hash-locked synthetic n=4 validation dataset and unrounded Minitab
+  22.5.1 reconciliation for Xbar-R, `Cp/Cpk/Pp/Ppk/Cpm`, plus documented
+  normality evidence and claim boundaries.
+- Added an explicitly assumption-driven ROI planning model with no claimed
+  realized savings.
+
 - Added a normalized PostgreSQL 16 persistence layer for verified SECOM data,
   including named relational constraints, Alembic migration and rollback,
   an idempotent transactional loader, and twenty audited read-only SQL queries.

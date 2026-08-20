@@ -7,6 +7,9 @@ This record keeps public statements aligned with available evidence.
 - Built an installable Python package and CLI for auditable manufacturing-data analysis.
 - Implemented tested overall process-performance metrics (`Pp/Ppk`).
 - Implemented `Cp/Cpk` formulas using an explicitly supplied within-subgroup sigma.
+- Implemented equal-size Xbar-R charts, Test 1 and `Rbar/d2` within-sigma
+  estimation; the n=4 path reproduces unrounded Minitab 22.5.1 reference
+  results within `1e-9` on a hash-locked synthetic dataset.
 - Added strict Excel ingestion, data-quality checks, automated tests, and a Minitab comparison protocol.
 - Implemented and independently validated one-way ANOVA, Pearson correlation,
   and simple linear regression against Minitab.
@@ -25,7 +28,8 @@ This record keeps public statements aligned with available evidence.
 - “CSSC-certified Green Belt Level II” until formal approval is received.
 - “Deployed in a production plant” or “used by a manufacturing client.”
 - “Delivered verified savings” or any financial result not approved by the relevant owner and finance function.
-- “Replaced Minitab” or “automatically validates process capability.”
+- “Replaced Minitab,” “matches every Minitab method,” or “automatically validates
+  process capability.”
 - “AI-powered industrial platform”; the current release is deterministic analytics, not an AI system.
 - “SECOM demonstrates process capability”; the dataset does not provide
   documented specification limits or a within-subgroup sigma suitable for
@@ -38,6 +42,10 @@ This record keeps public statements aligned with available evidence.
   scalability”; local reproducibility is not production evidence.
 - “Power BI is part of the persistence layer”; the PBIP project is an
   independent read-only consumer of PostgreSQL.
+- “Delivered ROI or savings.” The public ROI model contains assumptions for
+  proposals, not observed client or production results.
+- “Phase II process monitoring.” The current SPC path does not apply frozen
+  historical control limits to separate new observations.
 - “The milestone includes FastAPI, machine learning, or AI”; those capabilities
   remain outside this milestone.
 
