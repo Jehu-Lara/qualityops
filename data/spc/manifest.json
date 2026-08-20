@@ -1,0 +1,35 @@
+{
+  "dataset_id": "qualityops_spc_rbar_n4_v1",
+  "created": "2026-08-20",
+  "classification": "synthetic_non_confidential_validation_data",
+  "purpose": "controlled numerical comparison with Minitab 22.5.1",
+  "measurement_unit": "simulated unit",
+  "subgroup_definition": {
+    "count": 25,
+    "size": 4,
+    "ordering": "row order",
+    "scope": "designed validation subgroups; not observations from a production process"
+  },
+  "specification_assumptions": {
+    "lsl": 495,
+    "target": 500,
+    "usl": 505,
+    "justification": "controlled symmetric limits selected for formula validation; not customer or industry requirements"
+  },
+  "methods": {
+    "within_sigma": "Rbar/d2 with d2(4)=2.059",
+    "overall_sigma": "sample standard deviation with denominator N-1",
+    "control_limits": "three-sigma Xbar-R limits",
+    "control_test": "Test 1 only: point beyond three standard deviations",
+    "normality_check": "Minitab normal probability plot with Anderson-Darling statistic"
+  },
+  "files": {
+    "qualityops_spc_rbar_n4_v1.csv": "2ce0338888071200dcf4835bd21b72dbdbedba8336a6491e5eb3a8c783cb866c",
+    "minitab_22_5_1_reference.csv": "7e09bc4357c95e1bb1ccdfa30f1c5f183bc746cc1049af622fe6592be48b6c9d",
+    "docs/assets/spc/minitab-capability.png": "d44e423d236d9e10e06430e350084985ee55af6e50e007bb9e9aa2293286bf5f",
+    "docs/assets/spc/minitab-normality.png": "1bb2adb5ffbd17198833d0369301ac516642dda897a9a79f6c716aa372622981",
+    "docs/assets/spc/minitab-xbar-r.png": "13eb75716d34d6f3fb4894824f4bbcca55342a5187017ece38cc411a81f22ce4"
+  },
+  "reference_software": "Minitab 22.5.1 (64-bit)",
+  "acceptance_tolerance": 1e-9
+}

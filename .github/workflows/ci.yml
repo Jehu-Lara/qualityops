@@ -44,6 +44,15 @@ jobs:
       - name: Smoke-test CLI
         run: qualityops analyze --values 9 10 11 --lsl 7 --usl 13
 
+      - name: Smoke-test SPC CLI
+        run: |
+          qualityops spc \
+            --file data/spc/qualityops_spc_rbar_n4_v1.csv \
+            --columns measure_1 measure_2 measure_3 measure_4 \
+            --lsl 495 \
+            --usl 505 \
+            --target 500 > /dev/null
+
   postgres-integration:
     name: PostgreSQL 16 / Python 3.13
     runs-on: ubuntu-24.04

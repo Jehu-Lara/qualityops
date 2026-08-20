@@ -22,6 +22,8 @@ The current release provides:
 - mean and overall sample standard deviation;
 - `Pp`, `PPL`, `PPU`, and `Ppk` from overall sample variation;
 - optional `Cp`, `CPL`, `CPU`, and `Cpk` only when a documented within-subgroup sigma is supplied;
+- equal-size Xbar-R analysis with `Rbar/d2` within-sigma estimation, three-sigma
+  limits, Test 1 and subgroup-derived `Cp/Cpk`;
 - one-way ANOVA, Pearson correlation, and simple linear regression with
   independently recorded Minitab validation;
 - a byte-verified copy and deterministic quality audit of the public UCI SECOM
@@ -40,11 +42,19 @@ This distinction is intentional:
 | Metric family | Variation used | Interpretation in this project |
 |---|---|---|
 | `Pp` / `Ppk` | Overall sample standard deviation (`n - 1`) | Observed overall process performance |
-| `Cp` / `Cpk` | Caller-supplied within-subgroup standard deviation | Potential within-subgroup capability |
+| `Cp` / `Cpk` | Caller-supplied sigma, or `Rbar/d2` for explicit equal-size subgroups | Potential within-subgroup capability |
 
-The software does **not** infer a within-subgroup estimator from ungrouped observations. It also does not establish process stability, normality, measurement-system adequacy, or causal improvement. Those must be assessed before capability figures support an operational decision.
+The software does **not** infer subgroup structure from ungrouped observations.
+The caller must provide ordered, defensible rational subgroups. It also does not
+establish process stability, normality, measurement-system adequacy, or causal
+improvement. Those must be assessed before capability figures support an
+operational decision.
 
 Minitab uses overall standard deviation for `Pp/Ppk` and within-subgroup standard deviation for `Cp/Cpk`; see the [official Minitab process-data guidance](https://support.minitab.com/en-us/minitab/help-and-how-to/quality-and-process-improvement/capability-analysis/how-to/capability-analysis/normal-capability-analysis/interpret-the-results/all-statistics-and-graphs/process-data/).
+
+The current SPC path is a Phase I validation: it estimates the center and
+control limits from the same equal-size subgroups being evaluated. It does not
+yet apply frozen historical limits to separate Phase II monitoring data.
 
 ## Quick start
 
@@ -105,6 +115,21 @@ qualityops analyze \
 
 The command returns structured JSON. Blank measurement cells are excluded and counted; invalid non-blank values stop the analysis.
 
+Run the controlled Track C Xbar-R and capability comparison:
+
+```bash
+qualityops spc \
+  --file data/spc/qualityops_spc_rbar_n4_v1.csv \
+  --columns measure_1 measure_2 measure_3 measure_4 \
+  --lsl 495 \
+  --usl 505 \
+  --target 500
+```
+
+The public dataset is synthetic and non-confidential. Its limits and subgroup
+structure exist only to validate the documented formulas; see
+[docs/spc-validation.md](docs/spc-validation.md).
+
 ## Repository structure
 
 ```text
@@ -125,10 +150,12 @@ qualityops/
 
 ## Validation
 
-The repository separates two validation tracks:
+The repository separates three validation tracks:
 
 1. Compare mean, overall standard deviation, `Pp`, and `Ppk` against Minitab using the same observations, filters, limits, and precision.
 2. Compare `Cp` and `Cpk` only after recording Minitab's within-subgroup estimator and supplying the matching sigma to Python.
+3. Validate QualityOps' internal `Rbar/d2`, Xbar-R, Test 1 and capability path
+   against Minitab 22.5.1 using the hash-locked n=4 synthetic dataset.
 
 Use [docs/minitab-validation.md](docs/minitab-validation.md) and record results from the included template. Automated unit tests verify the implementation against analytically known examples; they do not replace validation on the intended dataset.
 
@@ -137,6 +164,7 @@ separate completed comparison in
 [docs/statistical-validation.md](docs/statistical-validation.md). The external
 SECOM dataset has its provenance and quality evidence recorded in
 [docs/secom-dataset.md](docs/secom-dataset.md).
+Track C is recorded in [docs/spc-validation.md](docs/spc-validation.md).
 
 ## Scope and responsible use
 

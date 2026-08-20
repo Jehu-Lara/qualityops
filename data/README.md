@@ -17,3 +17,11 @@ through `.gitattributes` and verified before QualityOps parses them.
 This exception does not authorize committing other external or local data.
 Every future dataset requires its own license, confidentiality, provenance,
 integrity, and data-quality review.
+
+## Synthetic SPC validation exception
+
+`spc/qualityops_spc_rbar_n4_v1.csv` is a project-authored, non-confidential
+synthetic dataset committed solely for formula validation. Its simulated limits,
+target, subgroup definition, method, hashes and Minitab evidence are recorded in
+`spc/manifest.json` and `docs/spc-validation.md`. It is not production data and
+does not establish customer specifications or real rational subgrouping.
